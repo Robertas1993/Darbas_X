@@ -450,7 +450,6 @@ def EditUserAdmin():
 @views.route("/addComment",methods=["GET","POST"])
 @login_required
 def addComment():
-    comment_types = CommentType.query.all()
     
     if request.method == 'POST':
         comment_type = request.form.get('comment_type')
@@ -465,7 +464,7 @@ def addComment():
             flash('Your comment has been added!', 'success')
             return redirect(url_for('views.home'))
 
-    return render_template('addComment.html',user=current_user,comment_types=comment_types)
+    return render_template('addComment.html',user=current_user)
 
 
 
