@@ -9,32 +9,59 @@ from . import db
 auth = Blueprint('auth', __name__)
 
 # Login Route
+from flask import session, request, redirect, url_for, render_template
+from datetime import datetime, timedelta
+import hashlib
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session
+from flask_login import login_user, current_user
+from .models import User
+from . import db
+import hashlib
+from datetime import datetime, timedelta, timezone
+
+auth = Blueprint('auth', __name__)
+
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
 
-        # Check if login attempts are blocked
-        if session.get('login_attempts', 0) >= 3:
-            return "Your login has been blocked after 3 unsuccessful attempts. Please try again later."
+        # Patikrinkite vartotoją
+        user = User.query.filter_by(email=email).first()  # Gauti vartotoją pagal el. paštą
+
+        # Patikrinkite, ar vartotojas yra užblokuotas
+        if user and user.blocked_until and datetime.utcnow() < user.blocked_until:
+            remaining_time = user.blocked_until - datetime.utcnow()
+            return f"Your login is blocked. Please try again in {remaining_time.seconds // 60} minutes."
 
         # Hash the password for checking
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
-        
-        # Check user credentials
-        user = User.query.filter_by(email=email, password=hashed_password).first()
-        
-        if user:
-            login_user(user)  # Use Flask-Login to log in the user
-            session['login_attempts'] = 0  # Reset login attempts on successful login
-            return redirect(url_for('views.home'))  # Adjust to your home route
+
+        if user and user.password == hashed_password:  # Check password only if user exists
+            login_user(user)  # Naudojame Flask-Login, kad prisijungtume vartotoją
+            user.blocked_until = None  # Atstatykite blokavimą, jei sėkmingai prisijungė
+            user.login_attempts = 0  # Atstatykite bandymų skaičių
+            db.session.commit()  # Išsaugokite pakeitimus
+            return redirect(url_for('views.home'))  # Pakeiskite į savo namų maršrutą
         else:
-            # Increment login attempts
-            session['login_attempts'] = session.get('login_attempts', 0) + 1
-            return render_template('login.html', text="Invalid email or password.")
+            if user:
+                # Padidinkite login attempts
+                user.login_attempts += 1
+                
+                if user.login_attempts >= 3:
+                    # Blokuokite prisijungimą 15 minučių
+                    user.blocked_until = datetime.utcnow() + timedelta(minutes=15)
+                    db.session.commit()  # Išsaugokite pakeitimus
+                    return "Your login has been blocked after 3 unsuccessful attempts. Please try again in 15 minutes."
+                
+                db.session.commit()  # Išsaugokite pakeitimus po bandymo skaičiaus didinimo
+            return render_template('login.html', text="Invalid email or password.", user=current_user)
     
-    return render_template('login.html', text="Please log in.", user=session.get('user'))
+    return render_template('login.html', text="Please log in.", user=current_user)
+
+
+
 
 @auth.route("/logout")
 @login_required
@@ -78,3 +105,16 @@ def signup():
             return redirect(url_for('views.home'))  # Adjust to your home route
 
     return render_template("sign_up.html", user=current_user)
+
+
+@auth.route("/delete", methods=['GET', 'POST'])
+@login_required
+def delete():
+            
+            db.session.delete(current_user)
+            db.session.commit()
+
+            logout_user()
+            flash("The user been successfully deleted",category="success")
+
+            return redirect(url_for('auth.login'))

@@ -17,11 +17,14 @@ Home
         <br/>
         <p><a class="text-background" href="/catalog">Catalog</a></p>
         <p><a class="text-background" href="/addComment">Leave a Review!</a></p>
-        <p><a class="text-background" href="/ViewCommentTypes">View Reviews</a></p>
-        
+        <p><a class="text-background" href="/ViewComments">View Reviews</a></p>
+        <p><a class="text-background" href="{{ url_for('views.add_component') }}">Add New Component</a></p>
 
         {% if current_user.is_authenticated and current_user.email == 'admin@gmail.com' %}
         <p><a class="text-background" href="/admin">Admin Page</a></p>
         {% endif %}
-
+        <a href="{{ url_for('views.balance') }}">View Balance</a>
             {% endblock %}
+
+
+            veikia su comment

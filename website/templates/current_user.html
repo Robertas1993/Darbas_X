@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block link %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='design.css') }}">
+{% endblock %}
+
+{% block title %}
+Home
+{% endblock %}
+
+{% block content %}
+    <br/>
+    <h3>Welcome {{ current_user.first_name }} to the home page! Please select your service:</h3>
+    <br/>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert">
+                <ul>
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="service-links">
+        <p><a class="text-background" href="/catalog">Catalog</a></p>
+        <p><a class="text-background" href="/addcomponent">Leave a Review!</a></p>
+        <p><a class="text-background" href="/ViewComments">View Reviews</a></p>
+        <p><a class="text-background" href="{{ url_for('views.add_component') }}">Add New Component</a></p>
+
+        {% if current_user.is_authenticated and current_user.email == 'admin@gmail.com' %}
+            <p><a class="text-background" href="/admin">Admin Page</a></p>
+        {% endif %}
+        
+        <p><a class="text-background" href="{{ url_for('views.balance') }}">View Balance</a></p>
+    </div>
+{% endblock %}

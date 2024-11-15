@@ -1,20 +1,21 @@
 {% extends "base.html" %}
 
-{% block link%}{% endblock%}
+{% block link %}{% endblock %}
 
 {% block title %}
-Select Type of comments you would like to see
+Select Comments
 {% endblock %}
+
 {% block content %}
-<h1>Comments of Type: {{ selected_type }}</h1>
+<h1>Comments</h1>
     {% if comments %}
         <ul>
             {% for comment in comments %}
-                <li>{{ comment.comment_data }}{{ comment.user_id}} {{ comment.date_created }}</li>
+                <li>{{ comment.comment_data }} - User ID: {{ comment.user_id }} - Date: {{ comment.date_created }}</li>
                 <br>
             {% endfor %}
         </ul>
     {% else %}
-        <p>No comments found for this type.</p>
+        <p>No comments found.</p>
     {% endif %}
 {% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block link %}
+<link rel="stylesheet" type="text/css" href="static/design.css">
+<script src="https://js.braintreegateway.com/web/3.81.0/js/client.min.js"></script>
+<script src="https://js.braintreegateway.com/web/3.81.0/js/hosted-fields.min.js"></script>
+{% endblock %}
+
+{% block title %}
+Process Payment
+{% endblock %}
+
+{% block content %}
+<h3>Make a Payment</h3>
+<form id="payment-form" method="POST" action="/process_payment">
+    <div id="card-number"></div>
+    <div id="cvv"></div>
+    <div id="expiration-date"></div>
+    <div id="postal-code"></div>
+    <button type="submit">Pay $10.00</button>
+    <div id="payment-errors"></div>
+</form>
+
+<script>
+    var form = document.querySelector('#payment-form');
+    var clientToken = "{{ client_token }}";  // Assuming you pass the client token from your route
+
+    braintree.dropin.create({
+        authorization: clientToken,
+        container: '#payment-form'
+    }, function (createErr, instance) {
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            instance.requestPaymentMethod(function (err, payload) {
+                if (err) {
+                    document.getElementById('payment-errors').innerText = err.message;
+                    return;
+                }
+                // Add the nonce to the form and submit
+                var nonceInput = document.createElement('input');
+                nonceInput.setAttribute('type', 'hidden');
+                nonceInput.setAttribute('name', 'payment_method_nonce');
+                nonceInput.setAttribute('value', payload.nonce);
+                form.appendChild(nonceInput);
+                form.submit();
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,35 +1,38 @@
 {% extends "base.html" %}
 
-{% block link%}{% endblock%}
-
 {% block title %}
+View Components
 {% endblock %}
+
 {% block content %}
-<h1>My Comments</h1>
-    {% if comments %}
-        <ul>
-            {% for comment in comments %}
-                <li>{{ comment.comment_data }}{{ comment.user_id}} {{ comment.date_created }}
-                    <button type="button" class="close" onClick="deleteComment('{{ comment.id }}')">
-                        <span aria-hidden="true">&times;</span>
-                      </button>
-                    </li>
-                    <br>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No comments found.</p>
-    {% endif %}
+<h1>Components</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Image</th>
+            <th>Stock</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for component in components %}
+        <tr>
+            <td>{{ component.name }}</td>
+            <td>{{ component.description }}</td>
+            <td>{{ component.price }}</td>
+            <td>
+                {% if component.image_url %}
+                    <img src="{{ component.image_url }}" alt="{{ component.name }}" style="width: 100px; height: auto;">
+                {% else %}
+                    No Image
+                {% endif %}
+            </td>
+            <td>{{ component.stock }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{% url 'views.add_component' %}" class="btn btn-primary">Add a New Component</a>
 {% endblock %}
-{% block javascript %}
-  <script type="text/javascript">
-    function deleteComment(commentId) {
-        fetch("/delete-comment", {
-            method: "POST",
-            body: JSON.stringify({ commentId: commentId }),
-           }).then((_res) => {
-            window.location.href = "/ViewMyComments";
-          });
-          }
-    </script>
-      {% endblock %}
