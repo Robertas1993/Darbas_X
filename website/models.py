@@ -17,7 +17,7 @@ class User(db.Model, UserMixin): #User Model - capital U because of python stand
     Country = db.Column(db.String(150),nullable=False)
     comments = db.relationship('Comment', backref='user', lazy=True)
     blocked_until = db.Column(db.DateTime, nullable=True)    
-    login_attempts = db.Column(db.Integer, default=3) 
+    login_attempts = db.Column(db.Integer, default=0) 
     balance = db.Column(db.Float, default=0.0)  # Pridėkite balansą
     orders = db.relationship('Order', backref='user', lazy=True)
     is_verified = db.Column(db.Boolean, default=False)  # Pridėtas laukelis el. pašto patvirtinimui

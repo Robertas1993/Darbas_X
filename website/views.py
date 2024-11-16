@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for,jsonify, abort
+from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for,jsonify, abort,session
 from flask_login import login_required, current_user
 from website.models import *
 from . import db
@@ -9,45 +9,38 @@ from datetime import datetime, timedelta
 views = Blueprint('views', __name__)
 import flask_sqlalchemy
 import braintree
-from flask_login import logout_user
+from flask_login import logout_user, current_user
 
 
 
 
 
 
+
+    
+
+
+
+
+def get_components():
+    return Component.query.all()  # Gauti visus komponentus iš duomenų bazės
 
 @views.route('/components', methods=['GET'])
 def view_components():
-    sort_by = request.args.get('sort', default='name')  # Default sorting
-    order = request.args.get('order', default='asc')  # Sorting order
+    sort_by = request.args.get('sort', 'name')
+    order = request.args.get('order', 'asc')
 
-    query = Component.query  # Įsitikinkite, kad naudojate Component modelį
+    components = get_components()  # Gauti komponentus
 
-    # Sort by price
-    if sort_by == 'price':
-        if order == 'asc':
-            query = query.order_by(Component.price.asc())
-        else:
-            query = query.order_by(Component.price.desc())
-    
-    # Sort by rating
+    # Rūšiavimas
+    if sort_by == 'name':
+        components.sort(key=lambda x: x.name, reverse=(order == 'desc'))
+    elif sort_by == 'price':
+        components.sort(key=lambda x: x.price, reverse=(order == 'desc'))
     elif sort_by == 'rating':
-        if order == 'asc':
-            query = query.order_by(Component.rating.asc())
-        else:
-            query = query.order_by(Component.rating.desc())
+        components.sort(key=lambda x: x.rating, reverse=(order == 'desc'))
 
-    components_list = query.all()
-
-    return render_template('components.html', components=components_list)
-
-@views.route('/view_components', methods=['GET'])
-def view_all_components():
-    components_list = Component.query.all()  # Gaukite visus komponentus
-    return render_template('view_components.html', components=components_list)
-
-
+    return render_template('components.html', components=components)
 @views.route('/balance')
 @login_required
 def balance():
@@ -55,69 +48,68 @@ def balance():
     return render_template('balance.html', balance=user.balance)
 
 
-# @views.route('/')
-# def index():
-#     return render_template('payment_form.html')
-
-# @views.route('/process_payment', methods=['POST'])
-# def process_payment():
-#     nonce_from_the_client = request.form.get('payment_method_nonce')
-#     if nonce_from_the_client is None:
-#         print("payment_method_nonce not found in the request.")
-#     else:
-#         print(f"Nonce: {nonce_from_the_client}")    
-#     # Bandykite atlikti mokėjimą
-#     result = braintree.Transaction.sale({
-#         "amount": "10.00",  # Pakeiskite su savo suma
-#         "payment_method_nonce": nonce_from_the_client,
-#         "options": {
-#             "submit_for_settlement": True
-#         }
-#     })
-
-    # if result.is_success:
-    #     return f"Transaction ID: {result.transaction.id}"
-    # else:
-    #     return f"Error: {result.message}"
 
 
 
 
-@views.route('/add_funds', methods=['POST'])
+@views.route('/add_funds', methods=['GET', 'POST'])
 def add_funds():
-    config = Configuration()  # Sukuriama instancija
-    print(config.environment)  # Jei reikia, galite pasiekti environment
-
-    print("Received request to add funds")
-    nonce_from_the_client = request.form.get('payment_method_nonce')
-    print(f"Nonce: {nonce_from_the_client}")
-
-    # Toliau tęskite su mokėjimo apdorojimu...
     if request.method == 'POST':
         amount = request.form.get('amount')
-        nonce_from_the_client = request.form.get('payment_method_nonce')
+        payment_method = request.form.get('payment_method')
+        
+        if payment_method == 'credit_card':
+            card_number = request.form.get('card_number')
+            card_expiry = request.form.get('card_expiry')
+            card_cvc = request.form.get('card_cvc')
+            
+        
+        if amount is None or payment_method is None:
+            flash('Both fields are required.', 'error')
+            return render_template('add_funds.html')
+        
+        print(f"Amount: {amount}, Payment Method: {payment_method}")  # Debugging line
+        try:
+            amount = float(amount)
+            if amount <= 0:
+                flash('Please enter a positive number', 'error')
+            else:
+                if payment_method == 'braintree':
+                    # Braintree integration logic
+                    try:
+                        # Get nonce from Braintree
+                        nonce = request.form.get('payment_method_nonce')
+                        # Create a Braintree transaction
+                        result = braintree.Transaction.sale({
+                            'amount': str(amount),
+                            'paymentMethodNonce': nonce,
+                            'options': {
+                                'submitForSettlement': True
+                            }
+                        })
+                        if result.is_success:
+                            # Successful payment
+                            current_user.balance += amount  # Assuming you have a balance field in your User model
+                            db.session.commit()  # Commit the changes
+                            flash('Funds successfully added!', 'success')
+                            return redirect(url_for('views.success'))  # Redirect to a success page
+                        else:
+                            # Payment error
+                            flash('An error occurred while processing the payment: ' + result.message, 'error')
+                    except Exception as e:
+                        flash('An unexpected error occurred: ' + str(e), 'error')
 
-        # Apdorokite mokėjimą
-        result = braintree.Transaction.sale({
-            "amount": amount,
-            "payment_method_nonce": nonce_from_the_client,
-            "options": {
-                "submit_for_settlement": True
-            }
-        })
+                elif payment_method == 'paypal':
+                    # PayPal integration logic
+                    # Implement your PayPal logic here
+                    pass
 
-        if result.is_success:
-            message = "Funds added successfully!"
-        else:
-            message = f"Error: {result.message}"
-
-        return render_template('add_funds.html', message=message)
+                else:
+                    flash('Unknown payment method', 'error')
+        except ValueError:
+            flash('Please enter a valid number', 'error')
 
     return render_template('add_funds.html')
-
-
-
-
 
 @views.route('/',methods=["POST","GET"])
 @login_required
@@ -198,14 +190,13 @@ def initialize_database():
     components_to_delete = Component.query.all()
     for component in components_to_delete:
         db.session.delete(component)
-    db.session.commit()
-    
+    db.session.commit()    
     db.create_all()
 
     #Add CPUs
-    cpu1 = Component(name='Intel Core i9-9900K', description='8-Core, 16-Thread, 3.6 GHz (5.0 GHz Turbo) LGA 1151 Processor', image_url='IntelCorei9-9900K.jpg', price=499.99, stock=5)
-    cpu2 = Component(name='AMD Ryzen 7 5800X', description='8-Core, 16-Thread, 3.8 GHz (4.7 GHz Boost) AM4 Processor', image_url='AMDRyzen75800X.jpg', price=449.99, stock=8)
-    cpu3 = Component(name='Intel Core i5-10600K', description='6-Core, 12-Thread, 4.1 GHz (4.8 GHz Turbo) LGA 1200 Processor', image_url='IntelCorei5-10600K.jpg', price=279.99, stock=10)
+    cpu1 = Component(name='Intel Core i9-9900K', description='8-Core, 16-Thread, 3.6 GHz (5.0 GHz Turbo) LGA 1151 Processor', image_url='Untitled copy 2.png', price=499.99, stock=5)
+    cpu2 = Component(name='AMD Ryzen 7 5800X', description='8-Core, 16-Thread, 3.8 GHz (4.7 GHz Boost) AM4 Processor', image_url='Untitled copy 3.png', price=449.99, stock=8)
+    cpu3 = Component(name='Intel Core i5-10600K', description='6-Core, 12-Thread, 4.1 GHz (4.8 GHz Turbo) LGA 1200 Processor', image_url='Untitled copy 4.png', price=279.99, stock=10)
     
 
     # Commit the changes to the database
@@ -213,9 +204,9 @@ def initialize_database():
     db.session.commit()
 
     # Add GPUs
-    gpu1 = Component(name='NVIDIA GeForce RTX 3080', description='10 GB GDDR6X, 8704 CUDA Cores, PCIe 4.0, Ray Tracing', image_url='NVIDIAGeForceRTX3080.jpg', price=799.99, stock=3)
-    gpu2 = Component(name='AMD Radeon RX 6800 XT', description='16 GB GDDR6, 72 Ray Accelerators, PCIe 4.0, Infinity Cache', image_url='AMDRadeonRX6800XT.jpg', price=649.99, stock=6)
-    gpu3 = Component(name='NVIDIA GeForce GTX 1660 Super', description='6 GB GDDR5, 1408 CUDA Cores, PCIe 3.0', image_url='NVIDIAGeForceGTX1660Super.jpg', price=249.99, stock=12)
+    gpu1 = Component(name='NVIDIA GeForce RTX 3080', description='10 GB GDDR6X, 8704 CUDA Cores, PCIe 4.0, Ray Tracing', image_url='Untitled copy.png', price=799.99, stock=3)
+    gpu2 = Component(name='AMD Radeon RX 6800 XT', description='16 GB GDDR6, 72 Ray Accelerators, PCIe 4.0, Infinity Cache', image_url='images/Untitled.png', price=649.99, stock=6)
+    gpu3 = Component(name='NVIDIA GeForce GTX 1660 Super', description='6 GB GDDR5, 1408 CUDA Cores, PCIe 3.0', image_url='Untitled1.jpg', price=249.99, stock=12)
 
     # Commit the changes to the database
     db.session.add_all([gpu1, gpu2, gpu3])
@@ -240,7 +231,7 @@ def add_component():
         # Patikrinkite, ar visi būtini laukai užpildyti
         if not all([component_name, component_description, component_price, component_image_url, component_stock]):
             flash('All fields are required!', 'danger')
-            return render_template('add_component.html')  # Grąžina šabloną su klaida
+            return render_template('views.add_component.html')  # Grąžina šabloną su klaida
 
         # Sukurti naują komponentą
         new_component = Component(
@@ -256,7 +247,7 @@ def add_component():
         db.session.commit()
 
         flash('Component added successfully!', 'success')
-        return redirect(url_for('view.ViewComponents'))  # Nukreipia į komponentų peržiūros puslapį
+        return redirect(url_for('views.add_component'))  # Nukreipia į komponentų peržiūros puslapį
 
     return render_template('add_component.html')  # Grąžina šabloną, kai užklausa GETThis is also a valid response
 

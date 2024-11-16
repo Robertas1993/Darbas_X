@@ -1,107 +1,62 @@
-{% comment %} {% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Funds</title>
+    <script src="https://js.braintreegateway.com/web/3.76.0/js/client.min.js"></script>
+    <script src="https://js.braintreegateway.com/web/3.76.0/js/dropin.min.js"></script>
+</head>
+<body>
+    <h1>Add Funds</h1>
+    <p><a href="{{ url_for('views.home') }}">Check Balance</a></p> 
+    <p><a href="{{ url_for('views.home') }}">Return to Home Page</a></p> <!-- Link to Home Page -->
 
-{% block link %}
-<link rel="stylesheet" type="text/css" href="static/style.css">
-<script src="https://js.braintreegateway.com/web/3.81.0/js/client.min.js"></script>
-<script src="https://js.braintreegateway.com/web/3.81.0/js/hosted-fields.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tree.js/1.0.0/tree.min.js"></script>
-{% endblock %}
 
-{% block title %}
-Pridėti Lėšas
-{% endblock %}
+    <form method="POST" action="{{ url_for('views.balance') }}" id="payment-form">
+        <input type="text" name="amount" placeholder="Enter amount" required>
+        
+        <select name="payment_method" id="payment-method" required>
+            <option value="braintree">Braintree</option>
+            <option value="credit_card">Credit Card</option>
+        </select>
 
-{% block content %}
-<h1>Pridėti Lėšas</h1>
-<form id="add-funds-form" method="POST" action="/add_funds">
-    <label for="amount">Įveskite sumą:</label>
-    <input type="number" id="amount" name="amount" required>
+        <div id="dropin-container"></div>
 
-    <label for="payment-method">Mokėjimo metodas:</label>
-    <select id="payment-method" name="payment_method" required>
-        <option value="credit_card">Kredito kortelė</option>
-        <option value="paypal">PayPal</option>
-        <option value="bank_transfer">Banko pervedimas</option>
-    </select>
+        <input type="submit" value="Add Funds">
+    </form>
 
-    <div id="tree-container">
-        <h2>Pasirinkite kategoriją</h2>
-        <div id="myTree"></div>
-    </div>
-
-    <div id="card-number"></div>
-    <div id="cvv"></div>
-    <div id="expiration-date"></div>
-    <div id="postal-code"></div>
-    <button type="submit">Pridėti Lėšas</button>
-    <div id="payment-errors"></div>
-</form>
-
-<script>
-    // Braintree Configuration
-    var clientToken = "{{ client_token }}"; // Assuming you pass the client token from your route
-
-    braintree.dropin.create({
-        authorization: clientToken,
-        container: '#card-number',
-        paymentOptionPriority: ['creditCard', 'paypal'],
-        card: {
-            cardholderName: '#card-holder-name'
-        }
-    }, function (createErr, instance) {
-        // Handle error in creating drop-in
-        if (createErr) {
-            console.error(createErr);
-            return;
-        }
-
-        var form = document.querySelector('#add-funds-form');
-        form.addEventListener('submit', function (event) {
-            event.preventDefault();
-
-            instance.requestPaymentMethod(function (err, payload) {
-                if (err) {
-                    document.getElementById('payment-errors').innerText = err.message;
-                    return;
-                }
-
-                // Add the nonce to the form and submit
-                var nonceInput = document.createElement('input');
-                nonceInput.setAttribute('type', 'hidden');
-                nonceInput.setAttribute('name', 'payment_method_nonce');
-                nonceInput.setAttribute('value', payload.nonce);
-                form.appendChild(nonceInput);
-
-                // Add selected category to the form
-                var selectedCategory = document.createElement('input');
-                selectedCategory.setAttribute('type', 'hidden');
-                selectedCategory.setAttribute('name', 'category');
-                selectedCategory.setAttribute('value', document.querySelector('#myTree .selected').textContent);
-                form.appendChild(selectedCategory);
-
-                form.submit();
+    <script>
+        var form = document.getElementById('payment-form');
+        
+        // Gauti klientų tokeną iš serverio
+        fetch('/client_token')
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                braintree.dropin.create({
+                    authorization: data.client_token,
+                    container: '#dropin-container'
+                }, function (createErr, instance) {
+                    form.addEventListener('submit', function (event) {
+                        event.preventDefault();
+                        instance.requestPaymentMethod(function (err, payload) {
+                            if (err) {
+                                console.error(err);
+                                return;
+                            }
+                            // Pridėti nonce į formą ir pateikti
+                            var nonceInput = document.createElement('input');
+                            nonceInput.setAttribute('type', 'hidden');
+                            nonceInput.setAttribute('name', 'payment_method_nonce');
+                            nonceInput.setAttribute('value', payload.nonce);
+                            form.appendChild(nonceInput);
+                            form.submit();
+                        });
+                    });
+                });
             });
-        });
-    });
-
-    // Initialize the tree structure
-    var treeData = [
-        { id: 1, parent: '#', text: 'Kategorijos' },
-        { id: 2, parent: 1, text: 'Maistas' },
-        { id: 3, parent: 1, text: 'Transportas' },
-        { id: 4, parent: 1, text: 'Pramogos' }
-    ];
-
-    var tree = new Tree('#myTree', {
-        data: treeData,
-        onSelect: function(node) {
-            console.log('Pasirinkta kategorija: ' + node.text);
-            // Highlight the selected node
-            document.querySelectorAll('#myTree .node').forEach(function(n) {
-                n.classList.remove('selected');
-            });
-            node.element.classList.add('selected');
-        }
-    });
-</script>
-{% endblock %} {% endcomment %}
+    </script>
+</body>
+</html>

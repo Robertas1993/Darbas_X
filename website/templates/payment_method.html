@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Balance</title>
+    <script src="https://js.braintreegateway.com/web/3.81.0/js/client.min.js"></script>
+    <script src="https://js.braintreegateway.com/web/3.81.0/js/hosted-fields.min.js"></script>
+    <style>
+        /* Add some basic styling */
+        .braintree-field {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Your Balance</h1>
+    <p><a href="{{ url_for('views.home') }}">Return to Home Page</a></p> <!-- Link to Home Page -->
+
+    <p>Your current balance is: {{ balance }}</p>
+    <p><a href="{{ url_for('views.add_funds') }}">Top Up Balance</a></p>
+
+    <form method="POST" action="{{ url_for('views.add_funds') }}" id="payment-form">
+        <input type="text" name="balance" placeholder="Enter amount" required>
+        
+        <select name="payment_method" id="payment-method" required>
+            <option value="braintree">Braintree</option>
+            <option value="paypal">PayPal</option>
+        </select>
+
+        <div id="braintree-container" class="braintree-field" style="display: none;">
+            <div id="card-number" class="braintree-field"></div>
+            <div id="cvv" class="braintree-field"></div>
+            <div id="expiration" class="braintree-field"></div>
+            <div id="postal-code" class="braintree-field"></div>
+        </div>
+
+        <input type="submit" value="Add Funds">
+    </form>
+
+    <script>
+        // Initialize Braintree
+        var form = document.getElementById('payment-form');
+        var braintreeContainer = document.getElementById('braintree-container');
+
+        // Show Braintree fields when Braintree is selected
+        document.getElementById('payment-method').addEventListener('change', function() {
+            if (this.value === 'braintree') {
+                braintreeContainer.style.display = 'block';
+                // Initialize Braintree Hosted Fields
+                braintree.dropin.create({
+                    authorization: 'YOUR_CLIENT_TOKEN', // Replace with your Braintree client token
+                    container: 'braintree-container'
+                }, function (createErr, instance) {
+                    // Handle any errors
+                    if (createErr) {
+                        console.error(createErr);
+                        return;
+                    }
+                    form.addEventListener('submit', function(event) {
+                        event.preventDefault();
+                        instance.requestPaymentMethod(function (err, payload) {
+                            if (err) {
+                                console.error(err);
+                                return;
+                            }
+                            // Add the nonce to the form and submit
+                            var nonceInput = document.createElement('input');
+                            nonceInput.setAttribute('type', 'hidden');
+                            nonceInput.setAttribute('name', 'payment_method_nonce');
+                            nonceInput.setAttribute('value', payload.nonce);
+                            form.appendChild(nonceInput);
+                            form.submit();
+                        });
+                    });
+                });
+            } else {
+                braintreeContainer.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" crossorigin="anonymous" />
+    <title>Components</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Components</h1>
+        
+        <form method="GET" action="{{ url_for('view_components') }}">
+            <label for="sort">Sort by:</label>
+            <select name="sort" id="sort">
+                <option value="name">Name</option>
+                <option value="price">Price</option>
+                <option value="rating">Rating</option>
+            </select>
+            
+            <label for="order">Order:</label>
+            <select name="order" id="order">
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+            </select>
+            
+            <button type="submit" class="btn btn-primary">Sort</button>
+        </form>
+        
+        <ul class="list-group mt-3">
+            {% for component in components %}
+                <li class="list-group-item">
+                    <strong>{{ component.name }}</strong><br>
+                    <img src="{{ component.image_url }}" alt="{{ component.name }}" style="width: 100px;"/><br>
+                    Description: {{ component.description }}<br>
+                    Price: ${{ component.price }}<br>
+                    Stock: {{ component.stock }}<br>
+                    Rating: {{ component.rating }}<br>
+                    {% if component.isOnSale %}
+                        <span class="badge badge-danger">On Sale!</span>
+                    {% endif %}
+                </li>
+            {% else %}
+                <li class="list-group-item">No components found.</li>
+            {% endfor %}
+        </ul>
+        
+        <p class="mt-3"><a href="/">Return to Home Page</a></p>
+    </div>

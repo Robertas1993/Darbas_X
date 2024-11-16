@@ -1,31 +1,56 @@
-{% comment %} document.getElementById('add-funds-form').addEventListener('submit', function (event) {
-    event.preventDefault(); // Sustabdyti numatytąjį formos elgesį
+var form = document.getElementById('payment-form');
+var braintreeContainer = document.getElementById('braintree-container');
+var creditCardContainer = document.getElementById('credit-card-container');
 
-    instance.requestPaymentMethod(function (err, payload) {
-        if (err) {
-            console.error(err);
-            return;
+document.getElementById('payment-method').addEventListener('change', function() {
+    if (this.value === 'braintree') {
+        braintreeContainer.style.display = 'block';
+        creditCardContainer.style.display = 'none';
+        // Braintree logic here...
+    } else if (this.value === 'credit_card') {
+        creditCardContainer.style.display = 'block';
+        braintreeContainer.style.display = 'none';
+    } else {
+        braintreeContainer.style.display = 'none';
+        creditCardContainer.style.display = 'none';
+    }
+});
+
+// Braintree Drop-in UI logic
+braintree.dropin.create({
+    authorization: 'YOUR_CLIENT_TOKEN', // Replace with your Braintree client token
+    container: 'braintree-container'
+}, function (createErr, instance) {
+    if (createErr) {
+        console.error(createErr);
+        return;
+    }
+    
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        // Check which payment method is selected
+        var paymentMethod = document.getElementById('payment-method').value;
+
+        if (paymentMethod === 'braintree') {
+            instance.requestPaymentMethod(function (err, payload) {
+                if (err) {
+                    console.error(err);
+                    return;
+                }
+
+                // Add the nonce to the form and submit
+                var nonceInput = document.createElement('input');
+                nonceInput.setAttribute('type', 'hidden');
+                nonceInput.setAttribute('name', 'payment_method_nonce');
+                nonceInput.setAttribute('value', payload.nonce);
+                form.appendChild(nonceInput);
+                form.submit();
+            });
+        } else if (paymentMethod === 'credit_card') {
+            // For credit card, we don't need to get a nonce from Braintree
+            // Just submit the form as is
+            form.submit();
         }
-
-        // Siųskite `payload.nonce` į savo serverį
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/add_funds';
-
-        var hiddenInput = document.createElement('input');
-        hiddenInput.setAttribute('type', 'hidden');
-        hiddenInput.setAttribute('name', 'payment_method_nonce');
-        hiddenInput.setAttribute('value', payload.nonce);
-        form.appendChild(hiddenInput);
-
-        // Pridėkite amount į formą
-        var amountInput = document.createElement('input');
-        amountInput.setAttribute('type', 'hidden');
-        amountInput.setAttribute('name', 'amount');
-        amountInput.setAttribute('value', document.querySelector('input[name="amount"]').value);
-        form.appendChild(amountInput);
-
-        document.body.appendChild(form);
-        form.submit();
     });
-}); {% endcomment %}
+});

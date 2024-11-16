@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}
+View All Components
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>All Components</h1>
+        
+        <ul>
+            {% for component in components %}
+                <li>
+                    <strong>{{ component.name }}</strong><br>
+                    Price: ${{ component.price }}<br>
+                    Rating: {{ component.rating }}<br>
+                </li>
+            {% else %}
+                <li>No components found.</li>
+            {% endfor %}
+        </ul>
+        
+        <p><a href="{{ url_for('views.home') }}">Return to Home Page</a></p>
+    </div>
+{% endblock %}
