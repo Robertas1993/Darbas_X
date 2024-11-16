@@ -3,7 +3,6 @@
 {% block title %}Component Update Page{% endblock %}
 
 {% block content %}
-
 <body>
     <h1>Address Map and Secure Payment</h1>
     <!-- Map container -->
@@ -22,16 +21,24 @@
             <input type="text" id="expirationDate" name="expirationDate" pattern="(?:0[1-9]|1[0-2])\/[0-9]{2}" placeholder="MM/YY" required>
             
             <label for="cvv">CVV</label>
-            <input type="number" id="cvv" name="cvv" min="100" max="999" required>
+            <input type="text" id="cvv" name="cvv" pattern="[0-9]{3}" required> <!-- CVV laukelis supaprastintas -->
             
-            <label for="address">Address</label>
-            <textarea id="addressDisplay" readonly placeholder="Address will be displayed here"></textarea>
-            <input type="hidden" id="address" name="address"> <!-- Hidden input to store address -->
+            <h3>Address Details</h3>
+            <label for="street">Street</label>
+            <input type="text" id="street" name="street" required>
+            
+            <label for="city">City</label>
+            <input type="text" id="city" name="city" required>
+            
+            <label for="country">Country</label>
+            <input type="text" id="country" name="country" required>
+            
+            <label for="zip">Zip Code</label>
+            <input type="text" id="zip" name="zip" required>
+            
             <br>
             <input type="submit" value="Submit Payment">
         </form>
-
-        
     </div>
 
     <script>
@@ -49,68 +56,67 @@
             geocoder: geocoder
         }).addTo(map);
 
-        // Function to display address in textarea when map is clicked
+        // Function to display address in input fields when map is clicked
         map.on('click', function(event) {
             // Use reverse geocoding to retrieve address from clicked coordinates
             geocoder.reverse(event.latlng, map.options.crs.scale(map.getZoom()), function(results) {
                 if (results.length > 0) {
-                    var address = results[0].name || results[0].properties.label; // Get address from results
-                    document.getElementById('addressDisplay').value = address; // Update textarea with address
-                    document.getElementById('address').value = address; // Update hidden input with address
+                    var address = results[0]; // Get address from results
+                    document.getElementById('street').value = address.properties.address.road || ''; // Street
+                    document.getElementById('city').value = address.properties.address.city || ''; // City
+                    document.getElementById('country').value = address.properties.address.country || ''; // Country
+                    document.getElementById('zip').value = address.properties.address.postcode || ''; // Zip code
                 } else {
-                    document.getElementById('addressDisplay').value = 'Address not found';
-                    document.getElementById('address').value = ''; // Clear hidden input if address not found
+                    document.getElementById('street').value = '';
+                    document.getElementById('city').value = '';
+                    document.getElementById('country').value = '';
+                    document.getElementById('zip').value = ''; // Clear fields if address not found
                 }
             });
         });
     </script>
 
-<style>
-    /* Define map container */
-    #map {
-        height: 400px;
-        width: 100%;
-    }
-
-    #coordinates {
+    <style>
+        /* Define map container */
+        #map {
+            height: 400px;
             width: 100%;
-            height: 100px;
-            margin-top: 10px;
         }
-    /* Define form container */
-.container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
-}
-/* Form fields */
-label {
-  display: block;
-  margin-bottom: 10px;
-}
-input[type="text"],
-input[type="number"] {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 15px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
-}
-/* Submit button */
-input[type="submit"] {
-  background-color: #4CAF50;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-input[type="submit"]:hover {
-  background-color: #45a049;
-}
-</style>
+
+        /* Define form container */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Form fields */
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        /* Submit button */
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
 {% endblock %}
-
-
-

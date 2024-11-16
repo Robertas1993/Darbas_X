@@ -1,0 +1,31 @@
+{% comment %} document.getElementById('add-funds-form').addEventListener('submit', function (event) {
+    event.preventDefault(); // Sustabdyti numatytąjį formos elgesį
+
+    instance.requestPaymentMethod(function (err, payload) {
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        // Siųskite `payload.nonce` į savo serverį
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/add_funds';
+
+        var hiddenInput = document.createElement('input');
+        hiddenInput.setAttribute('type', 'hidden');
+        hiddenInput.setAttribute('name', 'payment_method_nonce');
+        hiddenInput.setAttribute('value', payload.nonce);
+        form.appendChild(hiddenInput);
+
+        // Pridėkite amount į formą
+        var amountInput = document.createElement('input');
+        amountInput.setAttribute('type', 'hidden');
+        amountInput.setAttribute('name', 'amount');
+        amountInput.setAttribute('value', document.querySelector('input[name="amount"]').value);
+        form.appendChild(amountInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    });
+}); {% endcomment %}

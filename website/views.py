@@ -8,7 +8,7 @@ from collections import Counter
 from datetime import datetime, timedelta
 views = Blueprint('views', __name__)
 import flask_sqlalchemy
-
+import braintree
 from flask_login import logout_user
 
 
@@ -55,42 +55,39 @@ def balance():
     return render_template('balance.html', balance=user.balance)
 
 
-import braintree
+# @views.route('/')
+# def index():
+#     return render_template('payment_form.html')
 
-@views.route('/')
-def index():
-    return render_template('payment_form.html')
+# @views.route('/process_payment', methods=['POST'])
+# def process_payment():
+#     nonce_from_the_client = request.form.get('payment_method_nonce')
+#     if nonce_from_the_client is None:
+#         print("payment_method_nonce not found in the request.")
+#     else:
+#         print(f"Nonce: {nonce_from_the_client}")    
+#     # Bandykite atlikti mokėjimą
+#     result = braintree.Transaction.sale({
+#         "amount": "10.00",  # Pakeiskite su savo suma
+#         "payment_method_nonce": nonce_from_the_client,
+#         "options": {
+#             "submit_for_settlement": True
+#         }
+#     })
 
-@views.route('/process_payment', methods=['POST'])
-def process_payment():
-    nonce_from_the_client = request.form['payment_method_nonce']
-    
-    # Bandykite atlikti mokėjimą
-    result = braintree.Transaction.sale({
-        "amount": "10.00",  # Pakeiskite su savo suma
-        "payment_method_nonce": nonce_from_the_client,
-        "options": {
-            "submit_for_settlement": True
-        }
-    })
-
-    if result.is_success:
-        return f"Transaction ID: {result.transaction.id}"
-    else:
-        return f"Error: {result.message}"
-
-
-
-
-
-
-
+    # if result.is_success:
+    #     return f"Transaction ID: {result.transaction.id}"
+    # else:
+    #     return f"Error: {result.message}"
 
 
 
 
 @views.route('/add_funds', methods=['POST'])
 def add_funds():
+    config = Configuration()  # Sukuriama instancija
+    print(config.environment)  # Jei reikia, galite pasiekti environment
+
     print("Received request to add funds")
     nonce_from_the_client = request.form.get('payment_method_nonce')
     print(f"Nonce: {nonce_from_the_client}")

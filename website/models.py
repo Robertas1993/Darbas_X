@@ -58,16 +58,19 @@ class Comment(db.Model):
     comment_data = db.Column(db.Text, nullable=False)
     date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    
-    
-class Configuration:
-    environment = 'development'  # Ensure this line exists
-
-config = Configuration()
-print(config.environment)  # This should work if 'environment' is an instance attribute
 
 def getPrice(component):
     return component.price
+    
+# class Configuration:
+#     def __init__(self):
+#         self.environment = 'development'  # Ensure this line exists
+
+# config = Configuration()
+# print(config.environment)  # This should work if 'environment' is an instance attribute
+
+# def getPrice(component):
+#     return component.price
 
 
 
