@@ -10,8 +10,7 @@ views = Blueprint('views', __name__)
 import flask_sqlalchemy
 import braintree
 from flask_login import logout_user, current_user
-
-
+# from .admin import *
 
 
 
@@ -60,6 +59,7 @@ def balance():
 
 
 @views.route('/add_funds', methods=['GET', 'POST'])
+@login_required
 def add_funds():
     if request.method == 'POST':
         amount = request.form.get('amount')
@@ -134,23 +134,6 @@ def home(): #When going to HomePage this function runs
 
 
 
-
-@views.route("/admin",methods=['GET','POST'])
-@login_required
-def admin():
-    currencyMultiplier = 0
-    currencySymbol="None"
-    if current_user.Country == "LT":
-        currencyMultiplier = 1.10
-        currencySymbol = "€"
-    if current_user.Country == "USA":
-        currencyMultiplier = 1
-        currencySymbol = "$"
- 
-
-    users = User.query.all()
-    components = Component.query.all()
-    return render_template('admin.html', user=current_user, users=users, components=components,currencySymbol=currencySymbol,currencyMultiplier=currencyMultiplier)
 
 
 @views.route("/update", methods=['GET', 'POST'])
@@ -283,6 +266,7 @@ def apply_discount(user_id, total_amount):
     return total_amount
 
 @views.route('/create_order', methods=['POST'])
+@login_required
 def create_order():
     user_id = request.form.get('user_id')
     amount = float(request.form.get('amount'))
@@ -322,9 +306,16 @@ def catalog():
     return render_template('catalog.html', components=components, user=current_user, currencyMultiplier=currencyMultiplier,currencySymbol=currencySymbol)
 
 
+
+def get_user_orders(user_id):
+    return Order.query.filter_by(user_id=user_id).all()
+
+
 @views.route("/order/<CompoID>",methods=['GET','POST'])
 @login_required
 def order(CompoID):
+    user_orders = get_user_orders(current_user.id)
+    print(f"User  ID: {current_user.id}, Orders: {user_orders}")  # Debugging line
     currencyMultiplier = 0
     currencySymbol="None"
     if current_user.Country == "LT":
@@ -362,6 +353,11 @@ def order(CompoID):
             return redirect(url_for('views.home'))
         
     return render_template('order.html', component=component, user=current_user,currencyMultiplier=currencyMultiplier,currencySymbol=currencySymbol)
+
+
+
+def get_user_orders(user_id):
+    return Order.query.filter_by(user_id=user_id).all()
 
 @views.route("/userOrders",methods=["GET","POST"])
 @login_required
@@ -467,79 +463,70 @@ def get_component_names(order_items):
 #         mail.send(msg)
 
 
-@views.route("/cartPage",methods=["GET","POST"])
+from flask import render_template, request, redirect, url_for
+from flask_login import login_required, current_user
+
+@views.route("/cartPage", methods=["GET", "POST"])
 @login_required
 def cartPage():
-     
+    # Naudokite current_user, kad gautumėte prisijungusio vartotojo informaciją
+    user = current_user
 
-    userID = request.args.get('userID')
-    user = User.query.get(userID)
-    items = user.cartItems
-    while "[]" in items:
-        items = items.replace("[]", "")
-    if items !="Empty":
-        ComponentsID = [int(item) for item in items.split(',') if item.strip()]
+    # Patikrinkite, ar vartotojas turi krepšelio prekių
+    if user.cartItems and user.cartItems != "Empty":
+        items = user.cartItems
+        # Paversti stringą į sąrašą
+        ComponentsID = [int(item.strip()) for item in items.split(',') if item.strip()]
     else:
-        # Handle the case where user.cartItems is None, for example:
         ComponentsID = []
-    ComponentsID.sort()
-    current_user_id = User.getUserId(current_user)
 
-    #Get the total Price
-    sum=0
+    ComponentsID.sort()
+
+    # Gauti bendrą kainą
+    total_price = 0
     for CompoID in ComponentsID:
         component = Component.query.filter_by(id=CompoID).first()
         if component:
             price = getPrice(component)
-            sum+=price
-    
-    #Get the Components in a dictionary to save the Amount and the Components ID's
+            total_price += price
+
+    # Gauti komponentus žodyną, kad išsaugotumėte kiekį ir komponentų ID
     ID_counter = {}
     for ID in ComponentsID:
-        if ID in ID_counter:
-         ID_counter[ID] += 1
-        else:
-            ID_counter[ID] = 1
-
+        ID_counter[ID] = ID_counter.get(ID, 0) + 1
 
     uniqueComponents = set(ComponentsID)
 
-    component_unique_list=[]
+    component_unique_list = []
     for ids in uniqueComponents:
-    # Retrieve the component with the given ID and append it to the list
         componentIterative = Component.query.filter_by(id=ids).first()
-        if component:
+        if componentIterative:
             component_unique_list.append(componentIterative)
-    
-    component_NotUnique_list=[]
-    sum1=0
-    for ids in ComponentsID:
-    # Retrieve the component with the given ID and append it to the list
-        componentIterative = Component.query.filter_by(id=ids).first()
-        if component:
-            if component.isOnSale:
-                sum1+=getPrice(componentIterative) * component.priceModifier
-            if component.isOnSale==False:
-                sum1+=getPrice(componentIterative)
 
+    sum1 = 0
+    for ids in ComponentsID:
+        componentIterative = Component.query.filter_by(id=ids).first()
+        if componentIterative:
+            if componentIterative.isOnSale:
+                sum1 += getPrice(componentIterative) * componentIterative.priceModifier
+            else:
+                sum1 += getPrice(componentIterative)
+
+    # Nustatyti valiutos simbolį ir dauginimo koeficientą
     currencyMultiplier = 0
-    currencySymbol="None"
+    currencySymbol = "None"
     if current_user.Country == "LT":
         currencyMultiplier = 1.10
-        sum1=sum1*currencyMultiplier
+        sum1 *= currencyMultiplier
         currencySymbol = "€"
-    if current_user.Country == "USA":
+    elif current_user.Country == "USA":
         currencyMultiplier = 1
-        sum1=sum1*currencyMultiplier
+        sum1 *= currencyMultiplier
         currencySymbol = "$"
- 
-    
-    return render_template('cartPage.html',user=current_user,ComponentsID=ComponentsID,
-                           ID_counter=ID_counter,components_list=component_unique_list,sum1=sum1,currencyMultiplier=currencyMultiplier,currencySymbol=currencySymbol)
 
-
-
-
+    return render_template('cartPage.html', user=current_user, ComponentsID=ComponentsID,
+                           ID_counter=ID_counter, components_list=component_unique_list, sum1=sum1,
+                           currencyMultiplier=currencyMultiplier, currencySymbol=currencySymbol)
 @views.route("/DeleteFromCart",methods=["GET","POST"])
 @login_required
 def DeleteFromCart():
@@ -667,29 +654,7 @@ def recipt():
 
 
 
-@views.route("/EditUserAdmin",methods=["GET","POST"])
-@login_required
-def EditUserAdmin():
-    if request.method=="POST":
-        ID = request.form.get('ID')
-        email = request.form.get('email')
-        name = request.form.get('name')
-        Currency = request.form.get('country-selector')
 
-        import hashlib
-        password = request.form.get('password')
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
-
-        user = User.query.filter_by(id=ID).first()
-        if user:
-            user.email = email
-            user.first_name = name
-            user.password = hashed_password
-            user.Country = Currency
-            db.session.commit()
-            return redirect(url_for('views.admin'))
-            
-    return render_template("EditUserAdmin.html",user=current_user)
 
 
 @views.route("/addComment",methods=["GET","POST"])
@@ -719,11 +684,7 @@ def ViewComments():
     comments = Comment.query.all()  # Išimkite filtravimą pagal tipą
     return render_template('ViewComments.html', user=current_user, comments=comments)
 
-@views.route("/viewCommentsAdmin", methods=["GET", "POST"])
-@login_required
-def viewCommentsAdmin():
-    comments = Comment.query.all()
-    return render_template('viewCommentsAdmin.html',user=current_user, comments=comments)
+
 
 @views.route('/delete-comment',methods=['POST'])
 @login_required
@@ -749,117 +710,110 @@ def ViewMyComments():
 
 
 
-# @views.route('/remove_component', methods=['GET', 'POST'])
-# def remove_component():
-#     if request.method == 'POST':
-#         component_name = request.form.get('component_name')
-#         if not component_name:
-#             return render_template('remove_component.html', error="Component name is required")
+@views.route("/admin", methods=['GET', 'POST'])
+@login_required
+def admin():
+    currencyMultiplier = 0
+    currencySymbol = "None"
+    
+    if current_user.Country == "LT":
+        currencyMultiplier = 1.10
+        currencySymbol = "€"
+    elif current_user.Country == "USA":
+        currencyMultiplier = 1
+        currencySymbol = "$"
 
-#         component = Component.query.filter_by(name=component_name).first()
-#         if component is None:
-#             return render_template('remove_component.html', error="Component not found")
-
-#         try:
-#             db.session.delete(component)
-#             db.session.commit()
-#             return render_template('remove_component.html', message=f"{component_name} deleted successfully")
-#         except Exception as e:
-#             db.session.rollback()  # Atkuriame sesiją, jei įvyko klaida
-#             return render_template('remove_component.html', error=str(e))
-
-#     return render_template('remove_component.html')
+    users = User.query.all()
+    components = Component.query.all()
+    return render_template('admin.html', user=current_user, users=users, components=components, currencySymbol=currencySymbol, currencyMultiplier=currencyMultiplier)
 
 
-# @views.route("/Bdelete", methods=['GET', 'POST'])
-# @login_required
-# def Bdelete():
-#     return render_template("Bdelete.html",user=current_user)
 
 
-# def CompoUpdate():
-#     components = Component.query.all()
 
-#     if request.method=="POST":
-#         ID = request.form.get('ID')
-#         NewName = request.form.get('NewName')
-#         Description = request.form.get('Description')
-#         imageName = request.form.get('imageName')
-#         Price = request.form.get('Price')
-#         Stock = request.form.get('Stock')
+def CompoUpdate():
+    components = Component.query.all()
 
-#         component = Component.query.filter_by(id = ID).first()
-#         if component:
-#             component.NewName = NewName
-#             component.Description = Description
-#             component.imageName = imageName
-#             component.Price = Price
-#             component.Stock = Stock
+    if request.method=="POST":
+        ID = request.form.get('ID')
+        NewName = request.form.get('NewName')
+        Description = request.form.get('Description')
+        imageName = request.form.get('imageName')
+        Price = request.form.get('Price')
+        Stock = request.form.get('Stock')
 
-#             db.session.commit()
-#         flash("The Component has been successfully updated",category="success")
+        component = Component.query.filter_by(id = ID).first()
+        if component:
+            component.NewName = NewName
+            component.Description = Description
+            component.imageName = imageName
+            component.Price = Price
+            component.Stock = Stock
 
-#     return render_template('CompoUpdate.html',user=current_user, components=components)
+            db.session.commit()
+        flash("The Component has been successfully updated",category="success")
 
-# @views.route("/CompoDelete",methods=["GET","POST"])
-# @login_required
-# def CompoDelete():
-#     components = Component.query.all()
-#     if request.method=="POST":
-#         ID = request.form.get('ID')
-#         component = Component.query.filter_by(id=ID).first()
-#         if component:
-#             db.session.delete(component)
-#             db.session.commit()
-#         return redirect(url_for('views.admin'))
-#     return render_template("CompoDelete.html",user=current_user,components=components)
+    return render_template('CompoUpdate.html',user=current_user, components=components)
 
-# @views.route("/CompoCreate",methods=["GET","POST"])
-# @login_required
-# def CompoCreate():
+@views.route("/CompoDelete",methods=["GET","POST"])
+@login_required
+def CompoDelete():
+    components = Component.query.all()
+    if request.method=="POST":
+        ID = request.form.get('ID')
+        component = Component.query.filter_by(id=ID).first()
+        if component:
+            db.session.delete(component)
+            db.session.commit()
+        return redirect(url_for('views.admin'))
+    return render_template("CompoDelete.html",user=current_user,components=components)
+
+@views.route("/CompoCreate",methods=["GET","POST"])
+@login_required
+def CompoCreate():
     
 
-#     components = Component.query.all()
-#     if request.method=="POST":
-#         NewName = request.form.get('NewName')
-#         Description = request.form.get('Description')
-#         imageName = request.form.get('imageName')
-#         Price = request.form.get('Price')
-#         Stock = request.form.get('Stock')
+    components = Component.query.all()
+    if request.method=="POST":
+        NewName = request.form.get('NewName')
+        Description = request.form.get('Description')
+        imageName = request.form.get('imageName')
+        Price = request.form.get('Price')
+        Stock = request.form.get('Stock')
 
-#         if not NewName or not Description or not imageName or not Price or not Stock:
-#             flash('Please fill out all fields', 'error')
-#         else:
-#             try:
-#                 newComponent = Component(
-#                     name=NewName, 
-#                     description=Description, 
-#                     image_url=imageName, 
-#                     price=float(Price), 
-#                     stock=int(Stock), 
-#                     isOnSale=False, 
-#                     priceModifier=1
-#                 )
+        if not NewName or not Description or not imageName or not Price or not Stock:
+            flash('Please fill out all fields', 'error')
+        else:
+            try:
+                newComponent = Component(
+                    name=NewName, 
+                    description=Description, 
+                    image_url=imageName, 
+                    price=float(Price), 
+                    stock=int(Stock), 
+                    isOnSale=False, 
+                    priceModifier=1
+                )
 
-#                 db.session.add(newComponent)
-#                 db.session.commit()
-#                 return redirect(url_for('views.admin'))
-#             except ValueError:
-#                 flash('Please enter valid data for Price and Stock', 'error')
-#     return render_template("CompoCreate.html",user=current_user,components=components)
-# @views.route("/addStock",methods=["GET","POST"])
-# @login_required
-# def addStock():
-#     components = Component.query.all()
-#     if request.method=="POST":
-#         ID = request.form.get('ID')
-#         NEWSTOCK = request.form.get('NEWSTOCK')
-#         component = Component.query.filter_by(id=ID).first()
-#         if component:
-#             component.stock = NEWSTOCK
-#             db.session.commit()
-#             return redirect(url_for('views.catalog'))
-#     return render_template("addStock.html",user=current_user,components=components)
+                db.session.add(newComponent)
+                db.session.commit()
+                return redirect(url_for('views.admin'))
+            except ValueError:
+                flash('Please enter valid data for Price and Stock', 'error')
+    return render_template("CompoCreate.html",user=current_user,components=components)
+@views.route("/addStock",methods=["GET","POST"])
+@login_required
+def addStock():
+    components = Component.query.all()
+    if request.method=="POST":
+        ID = request.form.get('ID')
+        NEWSTOCK = request.form.get('NEWSTOCK')
+        component = Component.query.filter_by(id=ID).first()
+        if component:
+            component.stock = NEWSTOCK
+            db.session.commit()
+            return redirect(url_for('views.catalog'))
+    return render_template("addStock.html",user=current_user,components=components)
 
 @views.route("/DeleteAccountAdmin", methods=["GET", "POST"])
 @login_required
@@ -881,82 +835,34 @@ def DeleteAccountAdmin():
     
     return render_template("DeleteAccountAdmin.html", user=current_user)
 
-# @views.route("/EditUserAdmin",methods=["GET","POST"])
-# @login_required
-# def EditUserAdmin():
-#     if request.method=="POST":
-#         ID = request.form.get('ID')
-#         email = request.form.get('email')
-#         name = request.form.get('name')
-#         Currency = request.form.get('country-selector')
 
-#         import hashlib
-#         password = request.form.get('password')
-#         hashed_password = hashlib.sha256(password.encode()).hexdigest()
+@views.route("/EditUserAdmin", methods=["GET", "POST"])
+@login_required
+def edit_user_admin():
+    if request.method == "POST":
+        ID = request.form.get('ID')
+        email = request.form.get('email')
+        name = request.form.get('name')
+        currency = request.form.get('country-selector')
+        password = request.form.get('password')
 
-#         user = User.query.filter_by(id=ID).first()
-#         if user:
-#             user.email = email
-#             user.first_name = name
-#             user.password = hashed_password
-#             user.Country = Currency
-#             db.session.commit()
-#             return redirect(url_for('views.admin'))
-            
-#     return render_template("EditUserAdmin.html",user=current_user)
+        # Hash the password
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
-# @views.route("/AddSale",methods=["GET","POST"])
-# @login_required
-# def AddSale():
-#     if request.method=="POST":
-#         ID = request.form.get('ID')
-#         Sale = request.form.get('Sale')
-#         component = Component.query.filter_by(id=ID).first()
-#         Sale = float(Sale)/100
-#         if Sale<1 and Sale > 0:
-#             component.isOnSale = True
-#             component.priceModifier = Sale
-#             db.session.commit()
-#         if Sale ==1: 
-#             component.isOnSale = False
-#             component.priceModifier = Sale
-#         flash(component.priceModifier,category="Success")
-#         return redirect(url_for('views.admin'))
+        user = User.query.filter_by(id=ID).first()
 
-#     return render_template("AddSale.html",user=current_user)
+        if user:
+            user.email = email
+            user.first_name = name
+            user.password = hashed_password
+            user.Country = currency
+            db.session.commit()
+            return redirect(url_for('views.admin'))  # Redirect to the admin page after updating
 
-# def Revenue():
-#     interval = request.args.get('interval', 'daily')
-    
-#     if interval == 'daily':
-#         revenue_data = db.session.query(
-#             func.date(Order.orderDate).label('period'),
-#             func.sum(Order.amountPaid).label('revenue')
-#         ).group_by(func.date(Order.orderDate)).all()
-#     elif interval == 'weekly':
-#         revenue_data = db.session.query(
-#             func.strftime('%Y-%W', Order.orderDate).label('period'),
-#             func.sum(Order.amountPaid).label('revenue')
-#         ).group_by(func.strftime('%Y-%W', Order.orderDate)).all()
-#     elif interval == 'monthly':
-#         revenue_data = db.session.query(
-#             func.strftime('%Y-%m', Order.orderDate).label('period'),
-#             func.sum(Order.amountPaid).label('revenue')
-#         ).group_by(func.strftime('%Y-%m', Order.orderDate)).all()
-#     elif interval == 'yearly':
-#         revenue_data = db.session.query(
-#             func.strftime('%Y', Order.orderDate).label('period'),
-#             func.sum(Order.amountPaid).label('revenue')
-#         ).group_by(func.strftime('%Y', Order.orderDate)).all()
-#     else:
-#         return "Invalid interval", 400
-#     return render_template('Revenue.html', revenue_data=revenue_data, user=current_user)
+    return render_template("EditUserAdmin.html", user=current_user)
 
 
 
-
-
-from collections import Counter
 @views.route("/Statistics", methods=["GET", "POST"])
 @login_required
 def Statistics():
@@ -972,24 +878,110 @@ def Statistics():
     newest_user = db.session.query(User).order_by(User.id.desc()).first()
     oldest_user = db.session.query(User).order_by(User.id).first()
 
-     # Most wanted component
+    # Kiek prekių nupirkta kurią dieną
+    orders_per_day = db.session.query(
+        func.date(Order.orderDate).label('date'),
+        func.sum(Order.amountPaid).label('total_sales')
+    ).group_by(func.date(Order.orderDate)).all()
+
+    # Už kiek nupirkta
+    sales_per_day = db.session.query(
+        func.date(Order.orderDate).label('date'),
+        func.sum(Order.amountPaid).label('total_sales')
+    ).group_by(func.date(Order.orderDate)).all()
+
+    # Pelningiausi mėnesiai
+    monthly_sales = db.session.query(
+        func.strftime('%Y-%m', Order.orderDate).label('month'),
+        func.sum(Order.amountPaid).label('total_sales')
+    ).group_by(func.strftime('%Y-%m', Order.orderDate)).order_by(func.sum(Order.amountPaid).desc()).all()
+
+    # Most wanted component
     all_orders = db.session.query(Order).all()
     component_counter = Counter()
 
     for order in all_orders:
-        order_items = order.orderItems.split(',')
+        order_items = order.orderItems.split(',')  # Assuming orderItems is a comma-separated string of component IDs
         component_counter.update(order_items)
 
     most_wanted_component_id = component_counter.most_common(1)[0][0]
     most_wanted_component = db.session.query(Component).filter_by(id=most_wanted_component_id).first()
 
-
     return render_template(
-        'Statistics.html',user=current_user,
+        'Statistics.html',
+        user=current_user,
         highest_order=highest_order,
         most_orders_user=most_orders_user,
         newest_user=newest_user,
         oldest_user=oldest_user,
+        orders_per_day=orders_per_day,
+        sales_per_day=sales_per_day,
+        monthly_sales=monthly_sales,
         most_wanted_component=most_wanted_component,
         most_wanted_component_count=component_counter[most_wanted_component_id]
     )
+    
+    
+    
+    
+@views.route('/remove_component', methods=['GET', 'POST'])
+@login_required
+def remove_component():
+    if request.method == 'POST':
+        component_name = request.form.get('component_name')
+        if not component_name:
+            return render_template('remove_component.html', error="Component name is required")
+
+        component = Component.query.filter_by(name=component_name).first()
+        if component is None:
+            return render_template('remove_component.html', error="Component not found")
+
+        try:
+            db.session.delete(component)
+            db.session.commit()
+            return render_template('remove_component.html', message=f"{component_name} deleted successfully")
+        except Exception as e:
+            db.session.rollback()  # Atkuriame sesiją, jei įvyko klaida
+            return render_template('remove_component.html', error=str(e))
+
+    return render_template('remove_component.html')
+
+
+@views.route("/Bdelete", methods=['GET', 'POST'])
+@login_required
+def Bdelete():
+    return render_template("Bdelete.html",user=current_user)
+
+
+@views.route("/EditUserAdmin",methods=["GET","POST"])
+@login_required
+def EditUserAdmin():
+    if request.method=="POST":
+        ID = request.form.get('ID')
+        email = request.form.get('email')
+        name = request.form.get('name')
+        Currency = request.form.get('country-selector')
+
+        import hashlib
+        password = request.form.get('password')
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+        user = User.query.filter_by(id=ID).first()
+        if user:
+            user.email = email
+            user.first_name = name
+            user.password = hashed_password
+            user.Country = Currency
+            db.session.commit()
+            return redirect(url_for('views.admin'))
+            
+    return render_template("EditUserAdmin.html",user=current_user)
+
+
+@views.route("/viewCommentsAdmin", methods=["GET", "POST"])
+@login_required
+def viewCommentsAdmin():
+    comments = Comment.query.all()
+    return render_template('viewCommentsAdmin.html',user=current_user, comments=comments)
+
+

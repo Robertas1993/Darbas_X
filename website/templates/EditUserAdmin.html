@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Edit User Admin{% endblock %}
+
+{% block content %}
+<h1>Edit User Information</h1>
+<form method="POST">
+    <input type="hidden" name="ID" value="{{ user.id }}">
+    <label for="email">Email:</label>
+    <input type="email" name="email" value="{{ user.email }}" required>
+    <br>
+    <label for="name">First Name:</label>
+    <input type="text" name="name" value="{{ user.first_name }}" required>
+    <br>
+    <label for="country-selector">Currency:</label>
+    <select name="country-selector" required>
+        <option value="USD" {% if user.Country == 'USD' %}selected{% endif %}>USD</option>
+        <option value="EUR" {% if user.Country == 'EUR' %}selected{% endif %}>EUR</option>
+        <!-- Pridėkite daugiau valiutų, jei reikia -->
+    </select>
+    <br>
+    <label for="password">Password:</label>
+    <input type="password" name="password" placeholder="Enter new password (leave blank to keep current)">
+    <br>
+    <button type="submit">Update User</button>
+</form>
+{% endblock %}

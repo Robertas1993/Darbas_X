@@ -63,15 +63,14 @@ class Comment(db.Model):
 def getPrice(component):
     return component.price
     
-# class Configuration:
-#     def __init__(self):
-#         self.environment = 'development'  # Ensure this line exists
+class Configuration:
+    def __init__(self):
+        self.environment = 'development'  # Ensure this line exists
 
-# config = Configuration()
-# print(config.environment)  # This should work if 'environment' is an instance attribute
+config = Configuration()
+print(config.environment)  # This should work if 'environment' is an instance attribute
 
-# def getPrice(component):
-#     return component.price
+
 
 
 

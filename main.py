@@ -1,9 +1,8 @@
-from website import *
-# create_app
+from website.auth import*
 from website.views import * 
-#  initialize_database
-import flask_migrate
+# from website.admin import *
 from website.models import *
+from website import *
 app=create_app()
 
 app.config['SQLALCHEMY_DATABASE_URI']='sqlite:///site.db'
@@ -20,4 +19,6 @@ braintree.Configuration.configure(
     public_key='crtgymtyhnsyy5fm',
     private_key='15348024636f389d0be0ee7e819ba686'
 )
+
+
 

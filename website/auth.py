@@ -1,40 +1,13 @@
 import hashlib
-import re
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 from flask_login import login_user, login_required, logout_user, current_user
 from .models import User
 from . import db
-
-auth = Blueprint('auth', __name__)
-import logging
-
-from flask import session, request, redirect, url_for, render_template
-from datetime import datetime, timedelta
-import hashlib
-from flask import Blueprint, render_template, request, flash, redirect, url_for, session
-from flask_login import login_user, current_user
-from .models import User
-from . import db
-import hashlib
-from datetime import datetime, timedelta, timezone
-
+import re
 auth = Blueprint('auth', __name__)
 
-from datetime import datetime, timedelta
-import hashlib
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from flask_login import login_user, current_user
-from .models import User, db
-
-auth = Blueprint('auth', __name__)
-
-from datetime import datetime, timedelta
-import hashlib
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from flask_login import login_user, current_user
-from .models import User, db
-
-auth = Blueprint('auth', __name__)
+# Čia galite pridėti savo funkcijas, pvz., prisijungimo, registracijos ir kt.
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -86,6 +59,7 @@ def login():
     return render_template('login.html', text="Please log in.", user=current_user)
 
 
+import logging
 
 
 # Nustatome logerio konfigūraciją
@@ -101,12 +75,18 @@ logging.basicConfig(
 # Sukuriame logerį
 logger = logging.getLogger()
 
-# Pavyzdys, kaip registruoti klaidą
+auth = Blueprint('auth', __name__)
+
+# Pavyzdys, kaip registruoti sėkmingą operaciją
 try:
     # Čia gali būti kodas, kuris gali sukelti klaidą
-    1 / 0  # Sukelia ZeroDivisionError
+    # Pavyzdžiui, galite atlikti kokią nors operaciją
+    result = 1 + 1  # Tiesiog paprastas pavyzdys
+    logger.info("Operacija įvykdyta sėkmingai, rezultatas: %d", result)
 except Exception as e:
     logger.error("Klaida įvyko: %s", e)  # Registruojame klaidą
+
+# Čia galite pridėti savo funkcijas, pvz., prisijungimo, registracijos ir kt.
 
 @auth.route("/logout")
 @login_required
