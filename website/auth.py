@@ -6,6 +6,7 @@ from .models import User
 from . import db
 
 auth = Blueprint('auth', __name__)
+import logging
 
 from flask import session, request, redirect, url_for, render_template
 from datetime import datetime, timedelta
@@ -83,6 +84,29 @@ def login():
             return render_template('login.html', text="Invalid email or password.", user=current_user)
 
     return render_template('login.html', text="Please log in.", user=current_user)
+
+
+
+
+# Nustatome logerio konfigūraciją
+logging.basicConfig(
+    level=logging.ERROR,  # Registruojame klaidas ir aukštesnio lygio pranešimus
+    format='%(asctime)s - %(levelname)s - %(message)s',  # Pranešimų formatas
+    handlers=[
+        logging.FileHandler("app.log"),  # Išsaugome logus faile
+        logging.StreamHandler()  # Išvedame logus į konsolę
+    ]
+)
+
+# Sukuriame logerį
+logger = logging.getLogger()
+
+# Pavyzdys, kaip registruoti klaidą
+try:
+    # Čia gali būti kodas, kuris gali sukelti klaidą
+    1 / 0  # Sukelia ZeroDivisionError
+except Exception as e:
+    logger.error("Klaida įvyko: %s", e)  # Registruojame klaidą
 
 @auth.route("/logout")
 @login_required

@@ -1,0 +1,47 @@
+{% extends "base.html" %} 
+
+{% block title %}Delete user{% endblock %}
+
+{% block link %}
+<link rel="stylesheet" type="text/css" href="static/design.css">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Delete User</h1>
+    <form action="/DeleteAccountAdmin" method="POST" onsubmit="DeleteUser (); return false;">
+        <label for="ID">User  ID:</label>
+        <input type="text" id="ID" name="ID" required>
+        <input type="submit" value="Delete">
+    </form>
+</div>
+
+<script>
+    function DeleteUser () {
+        var ID = document.getElementById("ID").value;
+
+        var formData = new FormData();
+        formData.append("ID", ID);
+
+        fetch("/DeleteAccountAdmin", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Handle successful response
+            console.log(data);
+            alert("User  deleted successfully!");
+        })
+        .catch(error => {
+            // Handle errors
+            console.error("There was a problem with the fetch operation:", error);
+        });
+    }
+</script>
+{% endblock %}

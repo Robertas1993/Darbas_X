@@ -17,8 +17,8 @@ Nusipirkus prekę galima palikti atsiliepimą apie prekę ir įvertinimu 1-5 žv
 ; Pridėti naują prekę 
 Papildyti esamų prekių kiekį
 Išimti prekę iš prekybos 
-Peržiūrėti sistemos naudotojų sąrašą.
-Ištrinti sistemos naudotojus
+; Peržiūrėti sistemos naudotojų sąrašą.
+; Ištrinti sistemos naudotojus
 Peržiūrėti statistika apie prekes. Kiek prekių nupirkta kurią dieną, už kiek nupirkta, kurie mėnesiai pelningiausi, kurios prekės geriausiai įvertintos.
 Papildomi reikalavimai:
 Visur naudokite Try, except (visos klaidos turi būti pagautos ir išvesti logiški klaidos pranešimai).
@@ -28,16 +28,15 @@ Sistema privalo turėti aiškią ir tvarkingą struktūra (static, templates, cr
 Visur turi būti patikrinimai (pvz naudotojas negalėtų nusipirkti prekės kurios nėra), arba negali nusipirkti jeigu neturi tam lėšų.
 Privalote naudoti Github bent su tokiomis šakomis (Master, Development ir task šakos (pvz AddingLoginFunctionality šaka). Turės būti, bent 10 commitų, per komandą. Negali būti tiesioginių commitų į Master šaką (apsauga yra mokama, dėl to apsimeskite, kad ji yra). Sukurkite, bent kelis pull requestus
 
-Privalote panaudoti migracijas.
-Privaloma naudoti įrankį užduočių valdymui Jira/trello/kitus įrankius
-Būtinai padarykite logerį (visos klaidos privalo būti išlogintos). Veiksmai, taip pat turėtų būti užloginti (CRUD operacijos, pvz tas ir tas nusipirko tokią prekę sėkmingai, tas ir tas sukūrė prekę sėkmingai).
+; Privalote panaudoti migracijas.
+; Privaloma naudoti įrankį užduočių valdymui Jira/trello/kitus įrankius
+; Būtinai padarykite logerį (visos klaidos privalo būti išlogintos). Veiksmai, taip pat turėtų būti užloginti (CRUD operacijos, pvz tas ir tas nusipirko tokią prekę sėkmingai, tas ir tas sukūrė prekę sėkmingai).
 Bonus points:
 
 ; Padarykite prisijungimo blokavimą ant laikmačio. T.Y neteisingai įvedus 3 kartus neleidžiama mėginti 5 minutes, neteisingai įvedus 4 kartą, 1 valandą ir t.t.
 Nuolaidos lojaliems klientams (lojalus, pirkęs daugiau, nei 3 kartus per tam tikrą laiką, arba išleidęs daugiau nei 500€)
 Administratoriams galimybę pridėti ir keisti nuolaidas.
 Slaptažodis turi turėti reikalavimus (panaudokite Regex) (import re).
-Slaptažodis turėtų būti hashuotas.
+; Slaptažodis turėtų būti hashuotas.
 Implementuokite el pašto patvirtinimo sistemą, taip pat siųskite laiškus naudotojams su reklamomis.
 Pinigų pridėjimas į sąskaitą būtų iš tikrųjų įgyvendintas (pavyzdžiui braintree ir kiti tiekėjai turi testine aplinką, kurią galima įdiegti ir veikia su netikromis kortelėmis ir apmokėjimais)
-Rekomendacijos

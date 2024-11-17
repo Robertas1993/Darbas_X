@@ -22,6 +22,8 @@ from flask_login import logout_user, current_user
 
 
 
+
+
 def get_components():
     return Component.query.all()  # Gauti visus komponentus iš duomenų bazės
 
@@ -30,17 +32,22 @@ def view_components():
     sort_by = request.args.get('sort', 'name')
     order = request.args.get('order', 'asc')
 
-    components = get_components()  # Gauti komponentus
+    components = get_components()  # Gauti visus komponentus
+
+    # Jei nėra komponentų, grąžinti pranešimą
+    if not components:
+        return render_template('components.html', message="No components found.")
 
     # Rūšiavimas
     if sort_by == 'name':
         components.sort(key=lambda x: x.name, reverse=(order == 'desc'))
     elif sort_by == 'price':
-        components.sort(key=lambda x: x.price, reverse=(order == 'desc'))
+        components.sort(key=lambda x: (x.price is None, x.price), reverse=(order == 'desc'))
     elif sort_by == 'rating':
-        components.sort(key=lambda x: x.rating, reverse=(order == 'desc'))
+        components.sort(key=lambda x: (x.rating is None, x.rating), reverse=(order == 'desc'))
 
     return render_template('components.html', components=components)
+
 @views.route('/balance')
 @login_required
 def balance():
@@ -854,18 +861,25 @@ def ViewMyComments():
 #             return redirect(url_for('views.catalog'))
 #     return render_template("addStock.html",user=current_user,components=components)
 
-# @views.route("/DeleteAccountAdmin",methods=["GET","POST"])
-# @login_required
-# def DeleteAccountAdmin():
-#     if request.method=="POST":
-#         ID = request.form.get('ID')
-#         user = User.query.filter_by(id=ID).first()
-#         if user:
-#             db.session.delete(user)
-#             db.session.commit()
-#             return redirect(url_for('views.admin'))
+@views.route("/DeleteAccountAdmin", methods=["GET", "POST"])
+@login_required
+def DeleteAccountAdmin():
+    if request.method == "POST":
+        ID = request.form.get('ID')
+        user = User.query.filter_by(id=ID).first()
+        
+        if user:
+            # Ištrinkite visus susijusius užsakymus
+            orders = Order.query.filter_by(user_id=user.id).all()
+            for order in orders:
+                db.session.delete(order)
             
-#     return render_template("DeleteAccountAdmin.html",user=current_user)
+            # Dabar ištrinkite vartotoją
+            db.session.delete(user)
+            db.session.commit()
+            return redirect(url_for('views.admin'))
+    
+    return render_template("DeleteAccountAdmin.html", user=current_user)
 
 # @views.route("/EditUserAdmin",methods=["GET","POST"])
 # @login_required
@@ -938,40 +952,44 @@ def ViewMyComments():
 #         return "Invalid interval", 400
 #     return render_template('Revenue.html', revenue_data=revenue_data, user=current_user)
 
-# from collections import Counter
-# @views.route("/Statistics", methods=["GET", "POST"])
-# @login_required
-# def Statistics():
-#     # Highest order paid
-#     highest_order = db.session.query(Order).order_by(Order.amountPaid.desc()).first()
+
+
+
+
+from collections import Counter
+@views.route("/Statistics", methods=["GET", "POST"])
+@login_required
+def Statistics():
+    # Highest order paid
+    highest_order = db.session.query(Order).order_by(Order.amountPaid.desc()).first()
     
-#     # User with the most orders
-#     most_orders_user = db.session.query(
-#         User, func.count(Order.id).label('order_count')
-#     ).join(Order).group_by(User.id).order_by(func.count(Order.id).desc()).first()
+    # User with the most orders
+    most_orders_user = db.session.query(
+        User, func.count(Order.id).label('order_count')
+    ).join(Order).group_by(User.id).order_by(func.count(Order.id).desc()).first()
     
-#     # Newest and oldest user
-#     newest_user = db.session.query(User).order_by(User.id.desc()).first()
-#     oldest_user = db.session.query(User).order_by(User.id).first()
+    # Newest and oldest user
+    newest_user = db.session.query(User).order_by(User.id.desc()).first()
+    oldest_user = db.session.query(User).order_by(User.id).first()
 
-#      # Most wanted component
-#     all_orders = db.session.query(Order).all()
-#     component_counter = Counter()
+     # Most wanted component
+    all_orders = db.session.query(Order).all()
+    component_counter = Counter()
 
-#     for order in all_orders:
-#         order_items = order.orderItems.split(',')
-#         component_counter.update(order_items)
+    for order in all_orders:
+        order_items = order.orderItems.split(',')
+        component_counter.update(order_items)
 
-#     most_wanted_component_id = component_counter.most_common(1)[0][0]
-#     most_wanted_component = db.session.query(Component).filter_by(id=most_wanted_component_id).first()
+    most_wanted_component_id = component_counter.most_common(1)[0][0]
+    most_wanted_component = db.session.query(Component).filter_by(id=most_wanted_component_id).first()
 
 
-#     return render_template(
-#         'Statistics.html',user=current_user,
-#         highest_order=highest_order,
-#         most_orders_user=most_orders_user,
-#         newest_user=newest_user,
-#         oldest_user=oldest_user,
-#         most_wanted_component=most_wanted_component,
-#         most_wanted_component_count=component_counter[most_wanted_component_id]
-#     )
+    return render_template(
+        'Statistics.html',user=current_user,
+        highest_order=highest_order,
+        most_orders_user=most_orders_user,
+        newest_user=newest_user,
+        oldest_user=oldest_user,
+        most_wanted_component=most_wanted_component,
+        most_wanted_component_count=component_counter[most_wanted_component_id]
+    )

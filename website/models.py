@@ -5,7 +5,7 @@ import ast
 from datetime import datetime
 import hashlib
 from flask_sqlalchemy import SQLAlchemy
-
+from sqlalchemy import Column, Integer, String, Float, DateTime
 
 
 class User(db.Model, UserMixin): #User Model - capital U because of python standarts
@@ -35,6 +35,7 @@ def check_password(self, password):
         return self.password == hashlib.sha256(password.encode()).hexdigest()
 
 class Order(db.Model):
+    __tablename__ = 'order'
     id = db.Column(db.Integer, primary_key=True)
     address = db.Column(db.String(255))
     amountPaid = db.Column(db.Integer, nullable=False)
