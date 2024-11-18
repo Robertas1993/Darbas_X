@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 
-{% block link%}{% endblock%}
+{% block link %}{% endblock %}
 
 {% block title %}
-Reveneu by dates
+Revenue by Dates
 {% endblock %}
+
 {% block content %}
-<h1>Reveneu by dates</h1>
+<h1>Revenue by Dates</h1>
 <style>
     table {
         width: 100%;
@@ -20,19 +21,31 @@ Reveneu by dates
         text-align: left;
     }
 </style>
-</head>
-<body>
-<h1>Revenue by Date</h1>
+
 <form method="get" action="/Revenue">
     <label for="interval">Select Interval:</label>
-    <select name="interval" id="interval">
+    <select name="interval" id="interval" onchange="updateDateInput()">
         <option value="daily" {% if interval == 'daily' %}selected{% endif %}>Daily</option>
         <option value="weekly" {% if interval == 'weekly' %}selected{% endif %}>Weekly</option>
         <option value="monthly" {% if interval == 'monthly' %}selected{% endif %}>Monthly</option>
         <option value="yearly" {% if interval == 'yearly' %}selected{% endif %}>Yearly</option>
+        <option value="date" {% if interval == 'date' %}selected{% endif %}>Specific Date</option>
     </select>
+    <br><br>
+    
     <button type="submit">Show Revenue</button>
 </form>
+
+<!-- Specific Date Input -->
+<div id="specific-date" style="display: {% if interval == 'date' %}block{% else %}none{% endif %}; margin-top: 20px;">
+    <form method="get" action="/Revenue">
+        <label for="date">Select Specific Date:</label>
+        <input type="date" name="date" id="date" value="{{ request.args.get('date', '') }}">
+        <input type="hidden" name="interval" value="date"> <!-- Ensure interval is set to 'date' -->
+        <button type="submit">Show Revenue</button>
+    </form>
+</div>
+
 <table>
     <tr>
         <th>Period</th>
@@ -41,8 +54,23 @@ Reveneu by dates
     {% for row in revenue_data %}
     <tr>
         <td>{{ row.period }}</td>
-        <td>{{ row.revenue }}</td>
+        <td>${{ '%.2f' | format(row.revenue) }}</td>
     </tr>
     {% endfor %}
 </table>
+
+{% if revenue_data is not defined or revenue_data|length == 0 %}
+<div class="alert alert-warning" role="alert">
+    No revenue data available for the selected interval.
+</div>
+{% endif %}
+
+<script>
+    // Show the specific date input only if 'Specific Date' is selected
+    function updateDateInput() {
+        var specificDateDiv = document.getElementById('specific-date');
+        specificDateDiv.style.display = document.getElementById('interval').value === 'date' ? 'block' : 'none';
+    }
+</script>
+
 {% endblock %}

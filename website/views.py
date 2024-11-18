@@ -55,36 +55,53 @@ def balance():
 
 
 
-from sqlalchemy import func, extract
+
+
 @views.route("/Revenue", methods=["GET", "POST"])
 @login_required
 def Revenue():
+    # Get the interval from the query parameters, default to 'daily'
     interval = request.args.get('interval', 'daily')
     
+    # Initialize revenue_data to None
+    revenue_data = None
+
+    # Query based on the interval
     if interval == 'daily':
         revenue_data = db.session.query(
             func.date(Order.orderDate).label('period'),
             func.sum(Order.amountPaid).label('revenue')
         ).group_by(func.date(Order.orderDate)).all()
+    
     elif interval == 'weekly':
         revenue_data = db.session.query(
             func.strftime('%Y-%W', Order.orderDate).label('period'),
             func.sum(Order.amountPaid).label('revenue')
         ).group_by(func.strftime('%Y-%W', Order.orderDate)).all()
+
     elif interval == 'monthly':
         revenue_data = db.session.query(
             func.strftime('%Y-%m', Order.orderDate).label('period'),
             func.sum(Order.amountPaid).label('revenue')
         ).group_by(func.strftime('%Y-%m', Order.orderDate)).all()
+
     elif interval == 'yearly':
         revenue_data = db.session.query(
             func.strftime('%Y', Order.orderDate).label('period'),
             func.sum(Order.amountPaid).label('revenue')
         ).group_by(func.strftime('%Y', Order.orderDate)).all()
+
+    elif interval == 'date':
+        revenue_data = db.session.query(
+            func.date(Order.orderDate).label('period'),
+            func.sum(Order.amountPaid).label('revenue')
+        ).group_by(func.date(Order.orderDate)).all()
+    
     else:
         return "Invalid interval", 400
-    return render_template('Revenue.html', revenue_data=revenue_data, user=current_user)
 
+    # Render the template with the retrieved revenue data
+    return render_template('Revenue.html', revenue_data=revenue_data, user=current_user)
 @views.route("/AddSale", methods=["GET", "POST"])
 @login_required
 def AddSale():
@@ -931,66 +948,7 @@ def edit_user_admin():
 
 
 
-@views.route("/Statistics", methods=["GET", "POST"])
-@login_required
-def Statistics():
-    # Highest order paid
-    highest_order = db.session.query(Order).order_by(Order.amountPaid.desc()).first()
-    
-    # User with the most orders
-    most_orders_user = db.session.query(
-        User, func.count(Order.id).label('order_count')
-    ).join(Order).group_by(User.id).order_by(func.count(Order.id).desc()).first()
-    
-    # Newest and oldest user
-    newest_user = db.session.query(User).order_by(User.id.desc()).first()
-    oldest_user = db.session.query(User).order_by(User.id).first()
 
-    # Kiek prekių nupirkta kurią dieną
-    orders_per_day = db.session.query(
-        func.date(Order.orderDate).label('date'),
-        func.sum(Order.amountPaid).label('total_sales')
-    ).group_by(func.date(Order.orderDate)).all()
-
-    # Už kiek nupirkta
-    sales_per_day = db.session.query(
-        func.date(Order.orderDate).label('date'),
-        func.sum(Order.amountPaid).label('total_sales')
-    ).group_by(func.date(Order.orderDate)).all()
-
-    # Pelningiausi mėnesiai
-    monthly_sales = db.session.query(
-        func.strftime('%Y-%m', Order.orderDate).label('month'),
-        func.sum(Order.amountPaid).label('total_sales')
-    ).group_by(func.strftime('%Y-%m', Order.orderDate)).order_by(func.sum(Order.amountPaid).desc()).all()
-
-    # Most wanted component
-    all_orders = db.session.query(Order).all()
-    component_counter = Counter()
-
-    for order in all_orders:
-        order_items = order.orderItems.split(',')  # Assuming orderItems is a comma-separated string of component IDs
-        component_counter.update(order_items)
-
-    most_wanted_component_id = component_counter.most_common(1)[0][0]
-    most_wanted_component = db.session.query(Component).filter_by(id=most_wanted_component_id).first()
-
-    return render_template(
-        'Statistics.html',
-        user=current_user,
-        highest_order=highest_order,
-        most_orders_user=most_orders_user,
-        newest_user=newest_user,
-        oldest_user=oldest_user,
-        orders_per_day=orders_per_day,
-        sales_per_day=sales_per_day,
-        monthly_sales=monthly_sales,
-        most_wanted_component=most_wanted_component,
-        most_wanted_component_count=component_counter[most_wanted_component_id]
-    )
-    
-    
-    
     
 @views.route('/remove_component', methods=['GET', 'POST'])
 @login_required
