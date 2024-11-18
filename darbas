@@ -1,12 +1,12 @@
 Sukurkite internetinės parduotuvės apsipirkimo sistemą, su flask/streamlit(rekomenduojama flask)  ir sqlAlchemy kuroje būtų:
 
  
-
-; Prisijungimas (neteisingai mėginant prisijungti 3 ar daugiau kartų turėtų būti užblokuotas prisijungimas)
+pakeisti kaina kad po kablelio butu 2 skaiciai
+    Your login has been blocked after 1 unsuccessful attempts. Please try again later. reikia sutvarkyti kad rasytu liko 2 tiek ir tiek kartu iki uzblokavimo
+; Prisijungimas (neteisingai mėginant prisijungti 3 ar daugiau kartų turėtų būti užblokuotas prisijungimas) 
 ; Registracija duomenų
 ; Galimybę peržiūrėti savo turimą balansą
-Galimybę papildyti savo balansą
-neveikia add balance iskarto su braintree noriu
+Galimybę papildyti savo balansąneveikia nes  iskarto su braintree noriu padaryti
 ; Peržiūrėti sistemoje esančias prekes
 ; Peržiūrėti prekes pagal įvairius rikiavimo/filtravimo būdus, pagal kainą, pagal įvertinimus ir t.t
 ; Įsidėti sistemoje esančias prekes į krepšelį ir jį išsaugoti
@@ -15,11 +15,11 @@ Nusipirkus prekę galima palikti atsiliepimą apie prekę ir įvertinimu 1-5 žv
 ; Atsijungti
 ; Administratoriaus galimybės
 ; Pridėti naują prekę 
-Papildyti esamų prekių kiekį
-Išimti prekę iš prekybos 
+; Papildyti esamų prekių kiekį
+; Išimti prekę iš prekybos 
 ; Peržiūrėti sistemos naudotojų sąrašą.
 ; Ištrinti sistemos naudotojus
-Peržiūrėti statistika apie prekes. Kiek prekių nupirkta kurią dieną, už kiek nupirkta, kurie mėnesiai pelningiausi, kurios prekės geriausiai įvertintos.
+Peržiūrėti statistika apie prekes. Kiek prekių nupirkta kurią dieną, už kiek nupirkta, kurie mėnesiai pelningiausi, kurios prekės geriausiai įvertintos. reiktu patobulint
 Papildomi reikalavimai:
 Visur naudokite Try, except (visos klaidos turi būti pagautos ir išvesti logiški klaidos pranešimai).
 ; Duomenys turi išlikti tarp programos paleidimų, tam naudokite duomenų bazę, galite naudoti bet kokią duomenų bazę.
@@ -35,7 +35,7 @@ Bonus points:
 
 ; Padarykite prisijungimo blokavimą ant laikmačio. T.Y neteisingai įvedus 3 kartus neleidžiama mėginti 5 minutes, neteisingai įvedus 4 kartą, 1 valandą ir t.t.
 Nuolaidos lojaliems klientams (lojalus, pirkęs daugiau, nei 3 kartus per tam tikrą laiką, arba išleidęs daugiau nei 500€)
-Administratoriams galimybę pridėti ir keisti nuolaidas.
+; Administratoriams galimybę pridėti ir keisti nuolaidas.
 Slaptažodis turi turėti reikalavimus (panaudokite Regex) (import re).
 ; Slaptažodis turėtų būti hashuotas.
 Implementuokite el pašto patvirtinimo sistemą, taip pat siųskite laiškus naudotojams su reklamomis.

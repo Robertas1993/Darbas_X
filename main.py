@@ -1,6 +1,5 @@
 from website.auth import*
 from website.views import * 
-# from website.admin import *
 from website.models import *
 from website import *
 app=create_app()

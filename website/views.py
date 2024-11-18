@@ -10,7 +10,6 @@ views = Blueprint('views', __name__)
 import flask_sqlalchemy
 import braintree
 from flask_login import logout_user, current_user
-# from .admin import *
 
 
 
@@ -56,6 +55,67 @@ def balance():
 
 
 
+from sqlalchemy import func, extract
+@views.route("/Revenue", methods=["GET", "POST"])
+@login_required
+def Revenue():
+    interval = request.args.get('interval', 'daily')
+    
+    if interval == 'daily':
+        revenue_data = db.session.query(
+            func.date(Order.orderDate).label('period'),
+            func.sum(Order.amountPaid).label('revenue')
+        ).group_by(func.date(Order.orderDate)).all()
+    elif interval == 'weekly':
+        revenue_data = db.session.query(
+            func.strftime('%Y-%W', Order.orderDate).label('period'),
+            func.sum(Order.amountPaid).label('revenue')
+        ).group_by(func.strftime('%Y-%W', Order.orderDate)).all()
+    elif interval == 'monthly':
+        revenue_data = db.session.query(
+            func.strftime('%Y-%m', Order.orderDate).label('period'),
+            func.sum(Order.amountPaid).label('revenue')
+        ).group_by(func.strftime('%Y-%m', Order.orderDate)).all()
+    elif interval == 'yearly':
+        revenue_data = db.session.query(
+            func.strftime('%Y', Order.orderDate).label('period'),
+            func.sum(Order.amountPaid).label('revenue')
+        ).group_by(func.strftime('%Y', Order.orderDate)).all()
+    else:
+        return "Invalid interval", 400
+    return render_template('Revenue.html', revenue_data=revenue_data, user=current_user)
+
+@views.route("/AddSale", methods=["GET", "POST"])
+@login_required
+def AddSale():
+    if request.method == "POST":
+        ID = request.form.get('ID')
+        discountPercentage = request.form.get('Sale')  # Pakeista į aiškesnį pavadinimą
+        component = Component.query.filter_by(id=ID).first()
+        
+        if component:  # Patikrinkite, ar komponentas egzistuoja
+            try:
+                discountPercentage = float(discountPercentage) / 100  # Paverčiame į procentus
+                if 0 <= discountPercentage < 1:
+                    component.isOnSale = True
+                    component.priceModifier = discountPercentage  # Nustatome kainos modifikatorių
+                elif discountPercentage == 1:
+                    component.isOnSale = False
+                    component.priceModifier = 1.0  # Atstatome į pradinę kainą
+                else:
+                    flash("Discount must be between 0 and 100%", category="Error")
+                    return redirect(url_for('views.admin'))
+                
+                db.session.commit()
+                flash("Sale updated successfully!", category="Success")
+            except ValueError:
+                flash("Invalid discount value!", category="Error")
+        else:
+            flash("Component not found!", category="Error")
+        
+        return redirect(url_for('views.admin'))
+    
+    return render_template("AddSale.html")  # Grąžinkite formą GET užklausai
 
 
 @views.route('/add_funds', methods=['GET', 'POST'])
@@ -731,29 +791,37 @@ def admin():
 
 
 
+
+
+@views.route('/CompoUpdate', methods=['GET', 'POST'])
 def CompoUpdate():
     components = Component.query.all()
 
-    if request.method=="POST":
+    if request.method == "POST":
         ID = request.form.get('ID')
-        NewName = request.form.get('NewName')
+        name = request.form.get('name')  # Naudokite 'name'
         Description = request.form.get('Description')
-        imageName = request.form.get('imageName')
+        imagename = request.form.get('imagename')
         Price = request.form.get('Price')
         Stock = request.form.get('Stock')
 
-        component = Component.query.filter_by(id = ID).first()
+        print(f"Received ID: {ID}")  # Debugging line
+
+        component = Component.query.filter_by(id=ID).first()
         if component:
-            component.NewName = NewName
+            component.name = name  # Naudokite 'name'
             component.Description = Description
-            component.imageName = imageName
+            component.imageName = imagename
             component.Price = Price
             component.Stock = Stock
 
             db.session.commit()
-        flash("The Component has been successfully updated",category="success")
+            flash("The Component has been successfully updated", category="success")
+            return jsonify({"message": "Component updated successfully!"}), 200
+        else:
+            return jsonify({"message": "Component not found!"}), 404
 
-    return render_template('CompoUpdate.html',user=current_user, components=components)
+    return render_template('CompoUpdate.html', user=current_user, components=components)
 
 @views.route("/CompoDelete",methods=["GET","POST"])
 @login_required
@@ -962,7 +1030,7 @@ def EditUserAdmin():
         name = request.form.get('name')
         Currency = request.form.get('country-selector')
 
-        import hashlib
+      
         password = request.form.get('password')
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 

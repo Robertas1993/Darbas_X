@@ -9,6 +9,8 @@ auth = Blueprint('auth', __name__)
 
 # Čia galite pridėti savo funkcijas, pvz., prisijungimo, registracijos ir kt.
 
+
+
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -58,7 +60,6 @@ def login():
 
     return render_template('login.html', text="Please log in.", user=current_user)
 
-
 import logging
 
 
@@ -75,7 +76,6 @@ logging.basicConfig(
 # Sukuriame logerį
 logger = logging.getLogger()
 
-auth = Blueprint('auth', __name__)
 
 # Pavyzdys, kaip registruoti sėkmingą operaciją
 try:
@@ -86,13 +86,12 @@ try:
 except Exception as e:
     logger.error("Klaida įvyko: %s", e)  # Registruojame klaidą
 
-# Čia galite pridėti savo funkcijas, pvz., prisijungimo, registracijos ir kt.
 
 @auth.route("/logout")
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('auth.logout'))
 
 @auth.route("/sign-up", methods=['GET', 'POST'])
 def signup():
