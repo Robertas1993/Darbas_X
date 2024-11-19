@@ -13,12 +13,12 @@ Home
     <h3>Welcome {{ user.first_name }} to the home page, please select your service</h3>
     <br/>
     <p><a class="text-background" href="/catalog">Catalog</a></p>
-    <p><a class="text-background" href="/ViewComments">View Reviews</a></p>
-    <p><a class="text-background" href="{{ url_for('views.add_component') }}">Add New Component</a></p>
     <p><a class="text-background" href="/balance">Check Balance</a></p>
     <p><a class="text-background" href="/components">Check items</a></p>
     <p><a class="text-background" href="{{ url_for('views.cartPage', user_id=user.id) }}">Cart</a></p>
-    <p><a class="text-background" href="{{ url_for('views.userOrders', user_orders=user_orders) }}">Orders</a></p>
+    <p><a class="text-background" href="/addComment">Feedback</a></p>
+    <p><a class="text-background" href="/ViewComments">View Feddbacks</a></p>
+
 
     {% if current_user.is_authenticated and current_user.email == 'admin@gmail.com' %}
         <p><a class="text-background" href="/admin">Admin Page</a></p>

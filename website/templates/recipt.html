@@ -93,8 +93,7 @@
                 </tr>
                 <tr>
                     <td>Payed Amount</td>
-                    <td>{{ currencySymbol }} {{ amount * currencyMultiplier}}</td>
-                </tr>
+                    <td>{{ currencySymbol }} {{ (amount * currencyMultiplier) | round(2) }}</td>                </tr>
 
             </table>
         </div>

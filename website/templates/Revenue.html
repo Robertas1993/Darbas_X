@@ -29,18 +29,22 @@ Revenue by Dates
         <option value="weekly" {% if interval == 'weekly' %}selected{% endif %}>Weekly</option>
         <option value="monthly" {% if interval == 'monthly' %}selected{% endif %}>Monthly</option>
         <option value="yearly" {% if interval == 'yearly' %}selected{% endif %}>Yearly</option>
-        <option value="date" {% if interval == 'date' %}selected{% endif %}>Specific Date</option>
+        <option value="date" {% if interval == 'date' %}selected{% endif %}>Specific Date Range</option>
     </select>
     <br><br>
     
     <button type="submit">Show Revenue</button>
 </form>
 
-<!-- Specific Date Input -->
+<!-- Specific Date Range Input -->
 <div id="specific-date" style="display: {% if interval == 'date' %}block{% else %}none{% endif %}; margin-top: 20px;">
     <form method="get" action="/Revenue">
-        <label for="date">Select Specific Date:</label>
-        <input type="date" name="date" id="date" value="{{ request.args.get('date', '') }}">
+        <label for="start_date">Select Start Date:</label>
+        <input type="date" name="start_date" id="start_date" value="{{ request.args.get('start_date', '') }}">
+        
+        <label for="end_date">Select End Date:</label>
+        <input type="date" name="end_date" id="end_date" value="{{ request.args.get('end_date', '') }}">
+        
         <input type="hidden" name="interval" value="date"> <!-- Ensure interval is set to 'date' -->
         <button type="submit">Show Revenue</button>
     </form>

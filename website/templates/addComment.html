@@ -1,53 +1,24 @@
-{% extends "base.html" %} 
-
-{% block title %} Order {{ component.name }} {% endblock %}
-
-{% block link %}
-<link rel="stylesheet" type="text/css" href="static/design.css">
-{% endblock %}
+{% extends "base.html" %}
 
 {% block content %}
+<div class="container">
+    <h1>Add Comment</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label for="comment_data">Comment:</label>
+            <textarea id="comment_data" name="comment_data" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
 
-<h1>Order Details</h1>
-
-<div class="component-container">
-    {% if component.isOnSale %}
-        <img class="component-image" src="{{ url_for('static', filename='images/' + component.image_url) }}" alt="{{ component.name }}">
-        <h2 class="component-name">{{ component.name }}</h2>
-        <p class="component-description">{{ component.description }}</p>
-        <p class="component-price">Price: {{ currencySymbol }} {{ component.price * currencyMultiplier * component.priceModifier }}</p>
-        <p class="component-stock">Stock: {{ component.stock }}</p>
-        <div class="sale-tag">On Sale!</div>
-    {% else %}
-        <img class="component-image" src="{{ url_for('static', filename='images/' + component.image_url) }}" alt="{{ component.name }}">
-        <h2 class="component-name">{{ component.name }}</h2>
-        <p class="component-description">{{ component.description }}</p>
-        <p class="component-price">Price: {{ currencySymbol }} {{ component.price * currencyMultiplier }}</p>
-        <p class="component-stock">Stock: {{ component.stock }}</p>
-    {% endif %}
-</div>
-
-<form action="/order/{{ component.id }}" method="POST">
-    <input type="hidden" id="ID" name="{{ component.id }}">
-    <button type="submit">Order</button>
-</form>
-
-<br/>
-<h3>We promise a safe and trusted delivery! The product itself has no issues whatsoever!</h3>
-
-<!-- Check if the user has ordered this component -->
-{% if current_user.is_authenticated and current_user.orders %}
-    {% set has_ordered = false %}
-    {% for order in current_user.orders %}
-        {% if order.component_id == component.id %}
-            {% set has_ordered = true %}
-            {% break %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="flashes">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
         {% endif %}
-    {% endfor %}
-
-    {% if has_ordered %}
-        <p><a class="text-background" href="/addComment?component_id={{ component.id }}">Leave a Review!</a></p>
-    {% endif %}
-{% endif %}
-
+    {% endwith %}
+</div>
 {% endblock %}

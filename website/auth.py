@@ -22,37 +22,36 @@ def login():
 
         user = User.query.filter_by(email=email).first()
 
-        # Check if the user is blocked
         if user and user.blocked_until and datetime.utcnow() < user.blocked_until:
             remaining_time = user.blocked_until - datetime.utcnow()
             flash(f"Your login is blocked. Please try again in {remaining_time.seconds // 60} minutes.", "danger")
             return render_template('login.html', text="Please log in.", user=current_user)
 
-        # Hash the password
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
         if user and user.password == hashed_password:
-            # Successful login
             login_user(user)
-            user.login_attempts = 0  # Reset login attempts on successful login
-            user.blocked_until = None  # Clear block status
+            user.login_attempts = 0  
+            user.blocked_until = None  
             db.session.commit()
             return redirect(url_for('views.home'))
         else:
-            # User does not exist or password is incorrect
             if user:
                 user.login_attempts += 1
                 
-                # Block user based on attempts
-                if user.login_attempts == 3:
+                if user.login_attempts == 2:
                     user.blocked_until = datetime.utcnow() + timedelta(minutes=5)
-                elif user.login_attempts == 4:
+                elif user.login_attempts == 3:
                     user.blocked_until = datetime.utcnow() + timedelta(hours=1)
-                elif user.login_attempts >= 5:
+                elif user.login_attempts >= 4:
                     user.blocked_until = datetime.utcnow() + timedelta(hours=24)
 
                 db.session.commit()
-                flash(f"Your login has been blocked after {user.login_attempts} unsuccessful attempts. Please try again later.", "danger")
+                remaining_attempts = 3 - user.login_attempts
+                if remaining_attempts > 0:
+                    flash(f"Invalid credentials. You have {remaining_attempts} attempts remaining before your account is blocked.", "danger")
+                else:
+                    flash(f"Your login has been blocked after {user.login_attempts} unsuccessful attempts. Please try again later.", "danger")
             else:
                 flash("Invalid email or password.", "danger")
 

@@ -60,60 +60,31 @@
         <h3>Command table</h3>
         <table>
             <tr>
-                <th>Component Editor</th>
+                <th>Product Editor</th>
                 <th>User Editor</th>
                 <th>Shop Editor</th>
                 <th>Comment Editor</th>
             </tr>
             <tr>
-                <td><p><a class="text-background" href="/CompoUpdate">Update Component Info</a></p></td>
+                <td><p><a class="text-background" href="/CompoUpdate">Update Product Info</a></p></td>
                 <td><p><a class="text-background" href="/EditUserAdmin">Edit User Info</a></p></td>
                 <td><p><a class="text-background" href="/addStock">Add Stock</a></p></td>
                 <td><p><a class="text-background" href="/viewCommentsAdmin">View Comments</a></p></td>
             </tr>
             <tr>
-                <td><p><a class="text-background" href="/CompoDelete">Delete Component Info</a></p></td>
+                <td><p><a class="text-background" href="/CompoDelete">Delete Product Info</a></p></td>
                 <td><p><a class="text-background" href="/DeleteAccountAdmin">Delete User</a></p></td>
                 <td><p><a class="text-background" href="/AddSale">Create Discount </a></p></td>
                 <td><p></a></p></td>
             </tr>
             <tr>
-                <td><p><a class="text-background" href="/CompoCreate">Create Component Info</a></p></td>
+                <td><p><a class="text-background" href="/CompoCreate">Create Product Info</a></p></td>
                 <td></td>
                 <td><p><a class="text-background" href="/Revenue">Revenue</a></p></td>
                 <td></td>
             </tr>
         </table>
     <br>
-    {% for component in components %}
-        <div class="component-container">
-            {% if component.isOnSale %}
-            <img class="component-image" src="{{ url_for('static', filename='images/' + component.image_url) }}" alt="{{ component.name }}">
-            <h2 class="component-name">{{ component.name }}</h2>
-            <p class="component-description">{{ component.description }}</p>
-            <p class="component-price">Price: {{ currencySymbol }} {{ component.price * currencyMultiplier * component.priceModifier }}</p>
-            <p class="component-stock">Stock: {{ component.stock }}</p>
-            <p class="component-stock">ID: {{component.id}}</p>
-            <div class="sale-tag">On Sale!</div>
-            {% endif %}
-            {% if not component.isOnSale %}
-            <img class="component-image" src="{{ url_for('static', filename='images/' + component.image_url) }}" alt="{{ component.name }}">
-            <h2 class="component-name">{{ component.name }}</h2>
-            <p class="component-description">{{ component.description }}</p>
-            <p class="component-price">Price: {{ currencySymbol }} {{ component.price * currencyMultiplier }}</p>
-            <p class="component-stock">Stock: {{ component.stock }}</p>
-            <p class="component-stock">ID: {{component.id}}</p>
-            {% endif %}
-        </div>
-    {% endfor %}
-    </body>
-    </html>
-
-
-
-    
-
-    
 
 {% endblock %}
 {% block javascript %}

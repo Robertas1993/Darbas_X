@@ -7,7 +7,6 @@ import hashlib
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Float, DateTime
 
-
 class User(db.Model, UserMixin): #User Model - capital U because of python standarts
     id = db.Column(db.Integer,primary_key=True) #Id column counted by int with Primary Key!
     email = db.Column(db.String(150), unique=True, nullable=False) #unique - allows/forbids (False/True) multiple instances with same info 
@@ -42,6 +41,8 @@ class Order(db.Model):
     orderItems = db.Column(db.String, nullable=False)
     orderDate = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)  # New column for order date
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    # quantity = db.Column(db.Integer, nullable=False)
+
 class Component(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -62,17 +63,4 @@ class Comment(db.Model):
 
 def getPrice(component):
     return component.price
-    
-class Configuration:
-    def __init__(self):
-        self.environment = 'development'  # Ensure this line exists
-
-config = Configuration()
-print(config.environment)  # This should work if 'environment' is an instance attribute
-
-
-
-
-
-
     

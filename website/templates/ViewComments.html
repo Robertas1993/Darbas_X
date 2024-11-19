@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
-{% block link %}{% endblock %}
+{% block link %}
+<!-- Čia galite pridėti papildomų CSS ar JavaScript nuorodų, jei reikia -->
+{% endblock %}
 
 {% block title %}
 Select Comments
@@ -11,7 +13,9 @@ Select Comments
     {% if comments %}
         <ul>
             {% for comment in comments %}
-                <li>{{ comment.comment_data }} - User ID: {{ comment.user_id }} - Date: {{ comment.date_created }}</li>
+                <li>
+                    {{ comment.comment_data }} - User ID: {{ comment.user_id }} - Date: {{ comment.date_created.strftime('%Y-%m-%d %H:%M:%S') }}
+                </li>
                 <br>
             {% endfor %}
         </ul>

@@ -1,62 +1,58 @@
+<!-- templates/add_funds.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Funds</title>
-    <script src="https://js.braintreegateway.com/web/3.76.0/js/client.min.js"></script>
-    <script src="https://js.braintreegateway.com/web/3.76.0/js/dropin.min.js"></script>
+    <p><a href="{{ url_for('views.home') }}">Return to Home Page</a></p>
+    <p><a href="{{ url_for('views.balance') }}">Check Balance</a></p>
+
 </head>
 <body>
     <h1>Add Funds</h1>
-    <p><a href="{{ url_for('views.home') }}">Check Balance</a></p> 
-    <p><a href="{{ url_for('views.home') }}">Return to Home Page</a></p> <!-- Link to Home Page -->
-
-
-    <form method="POST" action="{{ url_for('views.balance') }}" id="payment-form">
-        <input type="text" name="amount" placeholder="Enter amount" required>
-        
-        <select name="payment_method" id="payment-method" required>
-            <option value="braintree">Braintree</option>
-            <option value="credit_card">Credit Card</option>
-        </select>
-
-        <div id="dropin-container"></div>
-
-        <input type="submit" value="Add Funds">
+    <form method="POST" action="{{ url_for('views.add_funds') }}">
+        <div>
+            <label for="amount">Amount:</label>
+            <input type="number" name="amount" required>
+        </div>
+        <div>
+            <label for="payment_method">Payment Method:</label>
+            <select name="payment_method" required>
+                <option value="credit_card">Credit Card</option>
+            </select>
+        </div>
+        <div id="credit-card-details">
+            <div>
+                <label for="card_number">Card Number:</label>
+                <input type="text" name="card_number" placeholder="1234 5678 9012 3456" required>
+            </div>
+            <div>
+                <label for="card_expiry">Expiry Date:</label>
+                <input type="text" name="card_expiry" placeholder="MM/YY" required>
+            </div>
+            <div>
+                <label for="card_cvc">CVC:</label>
+                <input type="text" name="card_cvc" placeholder="123" required>
+            </div>
+        </div>
+        <div>
+            <button type="submit">Add Funds</button>
+        </div>
     </form>
 
     <script>
-        var form = document.getElementById('payment-form');
-        
-        // Gauti klientų tokeną iš serverio
-        fetch('/client_token')
-            .then(function (response) {
-                return response.json();
-            })
-            .then(function (data) {
-                braintree.dropin.create({
-                    authorization: data.client_token,
-                    container: '#dropin-container'
-                }, function (createErr, instance) {
-                    form.addEventListener('submit', function (event) {
-                        event.preventDefault();
-                        instance.requestPaymentMethod(function (err, payload) {
-                            if (err) {
-                                console.error(err);
-                                return;
-                            }
-                            // Pridėti nonce į formą ir pateikti
-                            var nonceInput = document.createElement('input');
-                            nonceInput.setAttribute('type', 'hidden');
-                            nonceInput.setAttribute('name', 'payment_method_nonce');
-                            nonceInput.setAttribute('value', payload.nonce);
-                            form.appendChild(nonceInput);
-                            form.submit();
-                        });
-                    });
-                });
-            });
+        // JavaScript to show/hide credit card details based on selected payment method
+        const paymentMethodSelect = document.querySelector('select[name="payment_method"]');
+        const creditCardDetails = document.getElementById('credit-card-details');
+
+        paymentMethodSelect.addEventListener('change', function() {
+            if (this.value === 'credit_card') {
+                creditCardDetails.style.display = 'block';
+            } else {
+                creditCardDetails.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>

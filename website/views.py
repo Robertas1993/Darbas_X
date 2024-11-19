@@ -8,7 +8,6 @@ from collections import Counter
 from datetime import datetime, timedelta
 views = Blueprint('views', __name__)
 import flask_sqlalchemy
-import braintree
 from flask_login import logout_user, current_user
 
 
@@ -107,18 +106,18 @@ def Revenue():
 def AddSale():
     if request.method == "POST":
         ID = request.form.get('ID')
-        discountPercentage = request.form.get('Sale')  # Pakeista į aiškesnį pavadinimą
+        discountPercentage = request.form.get('Sale')  
         component = Component.query.filter_by(id=ID).first()
         
-        if component:  # Patikrinkite, ar komponentas egzistuoja
+        if component:  
             try:
-                discountPercentage = float(discountPercentage) / 100  # Paverčiame į procentus
+                discountPercentage = float(discountPercentage) / 100  
                 if 0 <= discountPercentage < 1:
                     component.isOnSale = True
-                    component.priceModifier = discountPercentage  # Nustatome kainos modifikatorių
+                    component.priceModifier = discountPercentage  
                 elif discountPercentage == 1:
                     component.isOnSale = False
-                    component.priceModifier = 1.0  # Atstatome į pradinę kainą
+                    component.priceModifier = 1.0  
                 else:
                     flash("Discount must be between 0 and 100%", category="Error")
                     return redirect(url_for('views.admin'))
@@ -132,8 +131,10 @@ def AddSale():
         
         return redirect(url_for('views.admin'))
     
-    return render_template("AddSale.html")  # Grąžinkite formą GET užklausai
-
+    return render_template("AddSale.html")  
+@views.route('/success')
+def success():
+    return render_template('success.html') 
 
 @views.route('/add_funds', methods=['GET', 'POST'])
 @login_required
@@ -141,53 +142,27 @@ def add_funds():
     if request.method == 'POST':
         amount = request.form.get('amount')
         payment_method = request.form.get('payment_method')
-        
-        if payment_method == 'credit_card':
-            card_number = request.form.get('card_number')
-            card_expiry = request.form.get('card_expiry')
-            card_cvc = request.form.get('card_cvc')
-            
-        
+
         if amount is None or payment_method is None:
             flash('Both fields are required.', 'error')
             return render_template('add_funds.html')
-        
-        print(f"Amount: {amount}, Payment Method: {payment_method}")  # Debugging line
+
+        print(f"Amount: {amount}, Payment Method: {payment_method}")  
         try:
             amount = float(amount)
             if amount <= 0:
                 flash('Please enter a positive number', 'error')
             else:
-                if payment_method == 'braintree':
-                    # Braintree integration logic
-                    try:
-                        # Get nonce from Braintree
-                        nonce = request.form.get('payment_method_nonce')
-                        # Create a Braintree transaction
-                        result = braintree.Transaction.sale({
-                            'amount': str(amount),
-                            'paymentMethodNonce': nonce,
-                            'options': {
-                                'submitForSettlement': True
-                            }
-                        })
-                        if result.is_success:
-                            # Successful payment
-                            current_user.balance += amount  # Assuming you have a balance field in your User model
-                            db.session.commit()  # Commit the changes
-                            flash('Funds successfully added!', 'success')
-                            return redirect(url_for('views.success'))  # Redirect to a success page
-                        else:
-                            # Payment error
-                            flash('An error occurred while processing the payment: ' + result.message, 'error')
-                    except Exception as e:
-                        flash('An unexpected error occurred: ' + str(e), 'error')
+                if payment_method == 'credit_card':
+                    card_number = request.form.get('card_number')
+                    card_expiry = request.form.get('card_expiry')
+                    card_cvc = request.form.get('card_cvc')
 
-                elif payment_method == 'paypal':
-                    # PayPal integration logic
-                    # Implement your PayPal logic here
-                    pass
-
+                  
+                    current_user.balance += amount  
+                    db.session.commit()  
+                    flash('Funds successfully added!', 'success')
+                    return redirect(url_for('views.success'))  
                 else:
                     flash('Unknown payment method', 'error')
         except ValueError:
@@ -260,24 +235,21 @@ def initialize_database():
     db.session.commit()    
     db.create_all()
 
-    #Add CPUs
-    cpu1 = Component(name='Intel Core i9-9900K', description='8-Core, 16-Thread, 3.6 GHz (5.0 GHz Turbo) LGA 1151 Processor', image_url='Untitled copy 2.png', price=499.99, stock=5)
-    cpu2 = Component(name='AMD Ryzen 7 5800X', description='8-Core, 16-Thread, 3.8 GHz (4.7 GHz Boost) AM4 Processor', image_url='Untitled copy 3.png', price=449.99, stock=8)
-    cpu3 = Component(name='Intel Core i5-10600K', description='6-Core, 12-Thread, 4.1 GHz (4.8 GHz Turbo) LGA 1200 Processor', image_url='Untitled copy 4.png', price=279.99, stock=10)
+    test6 = Component(name='test6', description='tt', image_url='Untitled copy 2.png', price=99.99, stock=5)
+    test5 = Component(name='test5', description='aa', image_url='Untitled copy 3.png', price=49.99, stock=8)
+    test4 = Component(name='test4', description='bb', image_url='Untitled copy 4.png', price=79.99, stock=10)
     
 
-    # Commit the changes to the database
-    db.session.add_all([cpu1,cpu2,cpu3])
+    db.session.add_all([test4, test5, test6])
     db.session.commit()
 
-    # Add GPUs
-    gpu1 = Component(name='NVIDIA GeForce RTX 3080', description='10 GB GDDR6X, 8704 CUDA Cores, PCIe 4.0, Ray Tracing', image_url='Untitled copy.png', price=799.99, stock=3)
-    gpu2 = Component(name='AMD Radeon RX 6800 XT', description='16 GB GDDR6, 72 Ray Accelerators, PCIe 4.0, Infinity Cache', image_url='images/Untitled.png', price=649.99, stock=6)
-    gpu3 = Component(name='NVIDIA GeForce GTX 1660 Super', description='6 GB GDDR5, 1408 CUDA Cores, PCIe 3.0', image_url='Untitled1.jpg', price=249.99, stock=12)
+    test1 = Component(name='test3', description='cc', image_url='Untitled copy.png', price=99.99, stock=3)
+    test2 = Component(name='test2', description='ee', image_url='images/Untitled.png', price=49.99, stock=6)
+    test3 = Component(name='test1', description='dd', image_url='Untitled1.jpg', price=49.99, stock=12)
 
-    # Commit the changes to the database
-    db.session.add_all([gpu1, gpu2, gpu3])
+    db.session.add_all([test1, test2 ,test3])
     db.session.commit()
+
 
 
 

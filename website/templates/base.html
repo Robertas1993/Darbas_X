@@ -90,7 +90,7 @@
                     <a class="nav-item nav-link" href="{{ url_for('views.balance') }}">View Balance</a>
                     <a class="nav-item nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
                     <a class="nav-item nav-link" href="{{ url_for('views.cartPage', user_id=user.id) }}">Cart</a>
-                    <div class="nav-item nav-link"><button class="custom-button" type="button" onclick="MyCart('{{ user.id }}')">
+                    <div class="nav-item nav-link"('{{ user.id }}')">
                         {{ user.first_name }}
                     </button></div>
                 {% else %}
